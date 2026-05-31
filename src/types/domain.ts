@@ -161,6 +161,7 @@ export interface UserProfile {
   displayName: string
   createdAt: Timestamp
   updatedAt: Timestamp
+  lastLoginAt?: Timestamp | null
 }
 
 export interface Household {
@@ -342,10 +343,179 @@ export interface HouseholdSettingsDocument {
   regionPreferences: string[]
   enabledMealTypes: MealName[]
   updatedAt: Timestamp
+  roleLabels?: Partial<Record<UserRole, string>>
 }
 
 export interface UpdateHouseholdSettingsInput {
   schemaVersion?: number
   regionPreferences?: string[]
   enabledMealTypes?: MealName[]
+  roleLabels?: Partial<Record<UserRole, string>>
+}
+
+export interface AdminRecentChange {
+  id: string
+  collection: 'dishes' | 'ingredients' | 'staples' | 'pantryItems' | 'weeklyPlans' | 'mealSlots'
+  label: string
+  updatedBy: string
+  updatedAt: Timestamp
+}
+
+export interface AdminDataCounts {
+  dishes: number
+  ingredients: number
+  pantryItems: number
+  weeklyPlans: number
+}
+
+export interface AdminRoleLabels {
+  admin: string
+  editor: string
+  viewer: string
+}
+
+export interface AdminBackupUserProfile {
+  uid: string
+  role: UserRole
+  householdId: string
+  profileKey: ProfileKey
+  displayName: string
+  createdAt: string
+  updatedAt: string
+  lastLoginAt?: string | null
+}
+
+export interface AdminBackupHousehold {
+  id: string
+  name: string
+  ownerUid: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminBackupSettings {
+  schemaVersion: number
+  regionPreferences: string[]
+  enabledMealTypes: MealName[]
+  roleLabels?: Partial<Record<UserRole, string>>
+}
+
+export interface AdminBackupDish {
+  id: string
+  name: string
+  category: DishCategory
+  mainIngredients: string[]
+  emoji: string
+  recipe: string
+  youtubeUrl: string
+  referenceText: string
+  imageUrl: string
+  createdBy: string
+  updatedBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminBackupIngredient {
+  id: string
+  name: string
+  emoji: string
+  malayalamName: string
+  gujaratiName: string
+  imageUrl: string
+  createdBy: string
+  updatedBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminBackupStaple {
+  id: string
+  name: string
+  createdBy: string
+  updatedBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminBackupPantryItem {
+  id: string
+  ingredientId: string
+  kind: 'ingredient' | 'staple'
+  name: string
+  quantity: string
+  unit: string
+  status: string
+  updatedBy: string
+  updatedAt: string
+}
+
+export interface AdminBackupWeeklyPlan {
+  id: string
+  weekStart: string
+  createdBy: string
+  updatedBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminBackupMealSlot {
+  id: string
+  planId: string
+  day: DayKey
+  mealType: MealName
+  slotType: string
+  dishId: string
+  position: number
+  notes: string
+  updatedBy: string
+  updatedAt: string
+}
+
+export interface AdminBackupPayload {
+  version: 1
+  exportedAt: string
+  exportedBy: string
+  householdId: string
+  household: AdminBackupHousehold
+  profiles: AdminBackupUserProfile[]
+  settings: AdminBackupSettings | null
+  dishes: AdminBackupDish[]
+  ingredients: AdminBackupIngredient[]
+  staples: AdminBackupStaple[]
+  pantryItems: AdminBackupPantryItem[]
+  weeklyPlans: AdminBackupWeeklyPlan[]
+  mealSlots: AdminBackupMealSlot[]
+}
+
+export interface AdminImportPreview {
+  payload: AdminBackupPayload
+  counts: {
+    profiles: number
+    dishes: number
+    ingredients: number
+    staples: number
+    pantryItems: number
+    weeklyPlans: number
+    mealSlots: number
+  }
+  operations: {
+    profiles: { add: number; update: number }
+    dishes: { add: number; update: number }
+    ingredients: { add: number; update: number }
+    staples: { add: number; update: number }
+    pantryItems: { add: number; update: number }
+    weeklyPlans: { add: number; update: number }
+    mealSlots: { add: number; update: number }
+  }
+}
+
+export interface AdminImportResult {
+  profiles: { add: number; update: number }
+  dishes: { add: number; update: number }
+  ingredients: { add: number; update: number }
+  staples: { add: number; update: number }
+  pantryItems: { add: number; update: number }
+  weeklyPlans: { add: number; update: number }
+  mealSlots: { add: number; update: number }
 }

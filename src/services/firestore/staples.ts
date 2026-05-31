@@ -16,7 +16,7 @@ function normalizeStapleId(name: string) {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
-function mapStapleDocument(id: string, data: unknown): StapleDocument {
+export function mapStapleDocument(id: string, data: unknown): StapleDocument {
   const record = asRecord(data, 'Staple data')
 
   return {

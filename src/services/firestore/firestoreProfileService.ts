@@ -15,6 +15,11 @@ function asTimestamp(value: unknown, fieldName: string): Timestamp {
   throw new Error(`Profile data is invalid: ${fieldName} must be a Firestore timestamp.`)
 }
 
+function asOptionalTimestamp(value: unknown, fieldName: string): Timestamp | null {
+  if (value === undefined || value === null) return null
+  return asTimestamp(value, fieldName)
+}
+
 function asString(value: unknown, fieldName: string): string {
   if (typeof value === 'string' && value.trim()) return value
   throw new Error(`Profile data is invalid: ${fieldName} is required.`)
@@ -30,7 +35,7 @@ function asProfileKey(value: unknown): ProfileKey {
   throw new Error('Profile data is invalid: profileKey must be admin, mom, dad, or guest.')
 }
 
-function mapUserProfile(uid: string, data: unknown): UserProfile {
+export function mapUserProfile(uid: string, data: unknown): UserProfile {
   if (!isRecord(data)) {
     throw new Error('Profile data is invalid: expected a Firestore object.')
   }
@@ -43,10 +48,11 @@ function mapUserProfile(uid: string, data: unknown): UserProfile {
     profileKey: asProfileKey(data.profileKey),
     createdAt: asTimestamp(data.createdAt, 'createdAt'),
     updatedAt: asTimestamp(data.updatedAt, 'updatedAt'),
+    lastLoginAt: asOptionalTimestamp(data.lastLoginAt, 'lastLoginAt'),
   }
 }
 
-function mapHousehold(id: string, data: unknown): Household {
+export function mapHousehold(id: string, data: unknown): Household {
   if (!isRecord(data)) {
     throw new Error('Household data is invalid: expected a Firestore object.')
   }

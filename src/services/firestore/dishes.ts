@@ -15,7 +15,7 @@ import {
   type FirestoreServiceContext,
 } from './firestoreDataService'
 
-function mapDishDocument(id: string, data: unknown): DishDocument {
+export function mapDishDocument(id: string, data: unknown): DishDocument {
   const record = asRecord(data, 'Dish data')
 
   return {

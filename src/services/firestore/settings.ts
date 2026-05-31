@@ -38,6 +38,7 @@ export async function updateHouseholdSettings(
     if (input.schemaVersion !== undefined) payload.schemaVersion = input.schemaVersion
     if (input.regionPreferences !== undefined) payload.regionPreferences = input.regionPreferences
     if (input.enabledMealTypes !== undefined) payload.enabledMealTypes = input.enabledMealTypes
+    if (input.roleLabels !== undefined) payload.roleLabels = input.roleLabels
 
     await setDoc(settingsRef, payload, { merge: true })
     return readRequiredDoc(

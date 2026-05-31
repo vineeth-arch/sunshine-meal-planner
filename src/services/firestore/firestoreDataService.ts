@@ -14,6 +14,7 @@ import { getFirebaseApp } from '../../lib/firebase'
 import { canEdit } from '../../features/auth/access'
 import { getFriendlyFirebaseDataErrorMessage } from '../../lib/firebase/error-messages'
 import type {
+  AdminRoleLabels,
   DayKey,
   DishCategory,
   HouseholdSettingsDocument,
@@ -231,6 +232,18 @@ export function asStringArray(value: unknown, fieldName: string): string[] {
   })
 }
 
+export function asOptionalRoleLabels(value: unknown): Partial<AdminRoleLabels> | undefined {
+  if (value === undefined || value === null) return undefined
+  const record = asRecord(value, 'roleLabels')
+  const result: Partial<AdminRoleLabels> = {}
+
+  if (typeof record.admin === 'string') result.admin = record.admin
+  if (typeof record.editor === 'string') result.editor = record.editor
+  if (typeof record.viewer === 'string') result.viewer = record.viewer
+
+  return result
+}
+
 export function asSchemaVersion(value: unknown): number {
   if (typeof value === 'number' && Number.isInteger(value) && value >= 0) return value
   throw new Error('schemaVersion must be a non-negative integer.')
@@ -291,5 +304,6 @@ export function mapHouseholdSettingsDocument(id: string, data: unknown): Househo
     regionPreferences: asStringArray(record.regionPreferences, 'regionPreferences'),
     enabledMealTypes: asStringArray(record.enabledMealTypes, 'enabledMealTypes').map((value) => asMealName(value)),
     updatedAt: asTimestamp(record.updatedAt, 'updatedAt'),
+    roleLabels: asOptionalRoleLabels(record.roleLabels),
   }
 }

@@ -13,7 +13,7 @@ import {
   type FirestoreServiceContext,
 } from './firestoreDataService'
 
-function mapPantryItemDocument(id: string, data: unknown): PantryItemDocument {
+export function mapPantryItemDocument(id: string, data: unknown): PantryItemDocument {
   const record = asRecord(data, 'Pantry item data')
 
   return {

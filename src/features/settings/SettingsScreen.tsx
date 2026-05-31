@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 
 import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -8,39 +8,15 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 export function SettingsScreen() {
   const {
     state,
-    exportJson,
-    importJson,
     setIntegrations,
     syncMessage,
     error,
     refreshData,
     canEditData,
-    canImportExport,
   } = useLocalKitchen()
-  const [importText, setImportText] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [integrations, setLocalIntegrations] = useState(state.integrations)
   const allowEdit = canEditData
-
-  async function runImport(text: string) {
-    try {
-      const stats = await importJson(text)
-      setMessage(
-        `Imported: +${stats.dishAdd} dishes, ${stats.dishUpd} dish updates, +${stats.ingAdd} ingredients, ${stats.ingUpd} ingredient updates, +${stats.stapleAdd} staples, ${stats.stapleUpd} staple updates.`,
-      )
-      setImportText('')
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Import failed.')
-    }
-  }
-
-  async function handleFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (!file) return
-    const text = await file.text()
-    await runImport(text)
-    event.target.value = ''
-  }
 
   function handleIntegrationsSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -84,79 +60,11 @@ export function SettingsScreen() {
       </PanelCard>
 
       <PanelCard className="mk-stack-sm">
-        <h3 className="mk-subtitle">Export data</h3>
+        <h3 className="mk-subtitle">Household backup tools</h3>
         <p className="mk-copy">
-          JSON export preserves the legacy schema for dishes, ingredients, and staples. Local IndexedDB image blobs are not included.
+          Firestore household backup export and merge import now live in the Admin dashboard so access control, preview, and confirmation all stay in one place.
         </p>
-        {canImportExport ? (
-          <>
-            <div className="mk-inline-actions">
-              <button
-                type="button"
-                className="mk-button mk-button-primary mk-button-pad"
-                onClick={() => {
-                  const blob = new Blob([exportJson], { type: 'application/json' })
-                  const url = URL.createObjectURL(blob)
-                  const anchor = document.createElement('a')
-                  anchor.href = url
-                  anchor.download = 'moms-kitchen-cookbook.json'
-                  anchor.click()
-                  URL.revokeObjectURL(url)
-                  setMessage('Downloaded current JSON export.')
-                }}
-              >
-                Download JSON
-              </button>
-              <button
-                type="button"
-                className="mk-button mk-button-secondary mk-button-pad"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(exportJson)
-                    setMessage('Copied export JSON to clipboard.')
-                  } catch {
-                    setMessage('Clipboard copy failed in this browser.')
-                  }
-                }}
-              >
-                Copy JSON
-              </button>
-            </div>
-            <textarea className="mk-input mk-textarea" rows={10} readOnly value={exportJson} />
-          </>
-        ) : (
-          <p className="mk-meta">Export is admin-only while Firestore migration is in progress.</p>
-        )}
-      </PanelCard>
-
-      <PanelCard className="mk-stack-sm">
-        <h3 className="mk-subtitle">Import data</h3>
-        <p className="mk-copy">Existing items are updated and new ones are added. Missing items are not deleted.</p>
-        {canImportExport ? (
-          <>
-            <label className="mk-field">
-              Import JSON file
-              <input className="mk-input" type="file" accept="application/json,.json" onChange={handleFile} />
-            </label>
-            <textarea
-              className="mk-input mk-textarea"
-              rows={8}
-              value={importText}
-              onChange={(event) => setImportText(event.target.value)}
-              placeholder="Paste legacy export JSON here"
-            />
-            <button
-              type="button"
-              className="mk-button mk-button-primary mk-button-pad"
-              onClick={() => void runImport(importText)}
-              disabled={!importText.trim()}
-            >
-              Import pasted JSON
-            </button>
-          </>
-        ) : (
-          <p className="mk-meta">Import controls are available to admin accounts only.</p>
-        )}
+        <p className="mk-meta">Settings now stays focused on device-local integrations and local placeholders only.</p>
       </PanelCard>
 
       <PanelCard className="mk-stack-sm">

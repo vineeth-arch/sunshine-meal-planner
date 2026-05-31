@@ -17,7 +17,7 @@ import {
   type FirestoreServiceContext,
 } from './firestoreDataService'
 
-function mapIngredientDocument(id: string, data: unknown): IngredientDocument {
+export function mapIngredientDocument(id: string, data: unknown): IngredientDocument {
   const record = asRecord(data, 'Ingredient data')
 
   return {

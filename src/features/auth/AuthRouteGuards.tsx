@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react'
 import { Navigate } from 'react-router-dom'
 
+import { AuthAdminDeniedScreen } from './AuthAdminDeniedScreen'
 import { AuthLoadingScreen } from './AuthLoadingScreen'
 import { AuthProfileErrorScreen } from './AuthProfileErrorScreen'
 import { AuthSetupRequiredScreen } from './AuthSetupRequiredScreen'
@@ -36,7 +37,7 @@ export function RequireAdmin({ children }: PropsWithChildren) {
 
   if (loading || (user && profileState === 'loading')) return <AuthLoadingScreen />
   if (!user) return <Navigate to="/login" replace />
-  if (!isAdmin(profile)) return <Navigate to="/dashboard" replace />
+  if (!isAdmin(profile)) return <AuthAdminDeniedScreen />
 
   return children
 }
