@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom'
 
 const primaryNavItems = [
-  { to: '/dashboard', label: 'Dashboard', shortLabel: 'Home' },
   { to: '/today', label: 'Today', shortLabel: 'Today' },
   { to: '/tomorrow', label: 'Tomorrow', shortLabel: 'Tomorrow' },
   { to: '/week-planner', label: 'Week Planner', shortLabel: 'Week' },
   { to: '/pantry', label: 'Pantry', shortLabel: 'Pantry' },
+  { to: '/dishes', label: 'Dishes', shortLabel: 'Dishes' },
 ]
 
 export function MobileNav() {

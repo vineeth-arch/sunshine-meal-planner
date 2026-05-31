@@ -1,22 +1,13 @@
-import { ListCard } from '../../components/ui/ListCard'
-import { PanelCard } from '../../components/ui/PanelCard'
-import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { todaySummary } from '../../data/placeholders'
+import { DayPlannerView } from './DayPlannerView'
+import { getTodayKey } from '../../lib/date/plans'
 
 export function TodayScreen() {
   return (
-    <div className="mk-stack-lg">
-      <ScreenHeader
-        eyebrow="Today"
-        title="Today's family menu"
-        description="Placeholder meal slots make the new route structure visible without touching the legacy planning logic yet."
-      />
-
-      <PanelCard className="mk-three-column-stack">
-        <ListCard title="Breakfast" items={todaySummary.breakfast} />
-        <ListCard title="Lunch" items={todaySummary.lunch} />
-        <ListCard title="Dinner" items={todaySummary.dinner} />
-      </PanelCard>
-    </div>
+    <DayPlannerView
+      day={getTodayKey()}
+      eyebrow="Today"
+      title="Today's family menu"
+      description="Plan breakfast, lunch, and dinner from the same local data used by the legacy app."
+    />
   )
 }

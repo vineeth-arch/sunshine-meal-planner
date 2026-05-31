@@ -1,155 +1,31 @@
-import { createEmptyWeekDays, emptyDayPlan, getTodayKey, getTomorrowKey, getWeekStartDate } from '../../lib/date/plans'
-import {
-  STORAGE_KEY_INGREDIENTS,
-  STORAGE_KEY_INTEGRATIONS,
-  STORAGE_KEY_LAST_WEEK,
-  STORAGE_KEY_PLAN,
-  STORAGE_KEY_REPO,
-  STORAGE_KEY_STAPLES,
-} from '../../lib/storage/keys'
+import { emptyDayPlan, getTodayKey, getTomorrowKey } from '../../lib/date/plans'
 import type {
   DayKey,
   DayPlan,
   Dish,
   ExportPayload,
-  Ingredient,
-  Integrations,
   LegacySnapshot,
   LocalKitchenState,
+  Staple,
   WeeklyPlan,
 } from '../../types/domain'
-import { DEFAULT_DISHES, DEFAULT_STAPLES, INGREDIENT_EMOJI_MAP } from './defaults'
+import { buildExportPayload as buildLegacyExportPayload, applyImportPayload } from './importExportService'
+import {
+  derivePantryItems,
+  getDayPlan,
+  loadLocalKitchenState,
+  normalizeDishId,
+  persistIngredients,
+  persistIntegrations,
+  persistPlan,
+  persistRepo,
+  persistStaples,
+  syncIngredientsFromRepo,
+} from './localStorageService'
 import { listDishImagesAsDataUrls, listIngredientImagesAsDataUrls } from './imageStore'
 
-function readJson<T>(key: string): T | null {
-  try {
-    const value = localStorage.getItem(key)
-    return value ? (JSON.parse(value) as T) : null
-  } catch {
-    return null
-  }
-}
-
-function writeJson(key: string, value: unknown) {
-  localStorage.setItem(key, JSON.stringify(value))
-}
-
-function getStaplesSet(staples: string[]) {
-  return new Set(staples.map((item) => item.toLowerCase()))
-}
-
-function buildIngredientsFromRepo(repo: Dish[], staples = DEFAULT_STAPLES): Ingredient[] {
-  const stapleSet = getStaplesSet(staples)
-  const seen = new Set<string>()
-  const ingredients: Ingredient[] = []
-
-  repo.forEach((dish) => {
-    dish.mainIngredients.forEach((ingredient) => {
-      const key = ingredient.toLowerCase()
-      if (seen.has(key) || stapleSet.has(key)) return
-
-      seen.add(key)
-      ingredients.push({
-        name: ingredient,
-        emoji: INGREDIENT_EMOJI_MAP[key] ?? '🥗',
-      })
-    })
-  })
-
-  return ingredients.sort((a, b) => a.name.localeCompare(b.name))
-}
-
-function seedPlan(): WeeklyPlan {
-  return {
-    weekStartingDate: getWeekStartDate(),
-    days: createEmptyWeekDays(),
-  }
-}
-
-export function normalizeDishId(name: string) {
-  return `${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now().toString(36)}`
-}
-
-export function loadKitchenState(): LocalKitchenState {
-  const repo = readJson<Dish[]>(STORAGE_KEY_REPO) ?? DEFAULT_DISHES
-  const staples = readJson<string[]>(STORAGE_KEY_STAPLES) ?? DEFAULT_STAPLES
-  const integrations = readJson<Integrations>(STORAGE_KEY_INTEGRATIONS) ?? {}
-  const storedIngredients = readJson<Ingredient[]>(STORAGE_KEY_INGREDIENTS)
-  const lastWeekPlan = readJson<WeeklyPlan>(STORAGE_KEY_LAST_WEEK)
-  let plan = readJson<WeeklyPlan>(STORAGE_KEY_PLAN)
-
-  if (!readJson<Dish[]>(STORAGE_KEY_REPO)) writeJson(STORAGE_KEY_REPO, repo)
-  if (!readJson<string[]>(STORAGE_KEY_STAPLES)) writeJson(STORAGE_KEY_STAPLES, staples)
-
-  if (!plan) {
-    plan = seedPlan()
-    writeJson(STORAGE_KEY_PLAN, plan)
-  }
-
-  const currentWeekStart = getWeekStartDate()
-  if (plan.weekStartingDate !== currentWeekStart) {
-    writeJson(STORAGE_KEY_LAST_WEEK, plan)
-    plan = seedPlan()
-    writeJson(STORAGE_KEY_PLAN, plan)
-  }
-
-  const ingredients = storedIngredients ?? buildIngredientsFromRepo(repo, staples)
-  if (!storedIngredients) writeJson(STORAGE_KEY_INGREDIENTS, ingredients)
-
-  return {
-    repo,
-    ingredients,
-    staples,
-    plan,
-    lastWeekPlan,
-    integrations,
-  }
-}
-
-export function persistRepo(repo: Dish[]) {
-  writeJson(STORAGE_KEY_REPO, repo)
-}
-
-export function persistIngredients(ingredients: Ingredient[]) {
-  writeJson(STORAGE_KEY_INGREDIENTS, ingredients)
-}
-
-export function persistStaples(staples: string[]) {
-  writeJson(STORAGE_KEY_STAPLES, staples)
-}
-
-export function persistPlan(plan: WeeklyPlan) {
-  writeJson(STORAGE_KEY_PLAN, plan)
-}
-
-export function persistIntegrations(integrations: Integrations) {
-  writeJson(STORAGE_KEY_INTEGRATIONS, integrations)
-}
-
-export function syncIngredientsFromRepo(repo: Dish[], currentIngredients: Ingredient[], staples: string[]) {
-  const stapleSet = getStaplesSet(staples)
-  const existing = new Map(currentIngredients.map((ingredient) => [ingredient.name.toLowerCase(), ingredient]))
-  let changed = false
-
-  repo.forEach((dish) => {
-    dish.mainIngredients.forEach((name) => {
-      const key = name.toLowerCase()
-      if (stapleSet.has(key) || existing.has(key)) return
-      existing.set(key, {
-        name,
-        emoji: INGREDIENT_EMOJI_MAP[key] ?? '🥗',
-      })
-      changed = true
-    })
-  })
-
-  const next = [...existing.values()].sort((a, b) => a.name.localeCompare(b.name))
-  return changed ? next : currentIngredients
-}
-
-export function getDayPlan(plan: WeeklyPlan, day: DayKey): DayPlan {
-  return plan.days[day] ?? emptyDayPlan()
-}
+export { derivePantryItems, getDayPlan, loadLocalKitchenState as loadKitchenState, normalizeDishId }
+export { persistIngredients, persistIntegrations, persistPlan, persistRepo, persistStaples, syncIngredientsFromRepo }
 
 export function updateMealSlot(
   plan: WeeklyPlan,
@@ -177,54 +53,19 @@ export function getDishById(repo: Dish[], id: string) {
 }
 
 export function buildExportPayload(state: LocalKitchenState): ExportPayload {
-  return {
-    version: 1,
-    sabjis: state.repo.map((dish) => ({ ...dish })),
-    ingredients: state.ingredients.map((ingredient) => ({ ...ingredient })),
-    staples: [...state.staples],
-  }
+  return buildLegacyExportPayload(state)
 }
 
 export function applyImport(state: LocalKitchenState, payload: ExportPayload): LocalKitchenState {
-  const repoById = new Map(state.repo.map((dish) => [dish.id, dish]))
-  const ingredientByName = new Map(state.ingredients.map((ingredient) => [ingredient.name.toLowerCase(), ingredient]))
-  const nextRepo = [...state.repo]
-  const nextIngredients = [...state.ingredients]
-
-  payload.sabjis.forEach((dish) => {
-    if (!dish.name || !dish.category) return
-    const existing = repoById.get(dish.id)
-    if (existing) Object.assign(existing, dish)
-    else {
-      nextRepo.push({ ...dish })
-      repoById.set(dish.id, dish)
-    }
-  })
-
-  payload.ingredients.forEach((ingredient) => {
-    if (!ingredient.name) return
-    const key = ingredient.name.toLowerCase()
-    const existing = ingredientByName.get(key)
-    if (existing) Object.assign(existing, ingredient)
-    else {
-      nextIngredients.push({ ...ingredient })
-      ingredientByName.set(key, ingredient)
-    }
-  })
-
-  const mergedStaples = [...new Set([...state.staples, ...payload.staples.map((item) => item.toLowerCase())])]
-  const syncedIngredients = syncIngredientsFromRepo(nextRepo, nextIngredients, mergedStaples)
-
-  return {
-    ...state,
-    repo: nextRepo,
-    ingredients: syncedIngredients.sort((a, b) => a.name.localeCompare(b.name)),
-    staples: mergedStaples,
-  }
+  return applyImportPayload(state, payload).nextState
 }
 
-export function suggestDishesFromIngredients(repo: Dish[], available: string[], staples: string[]) {
-  const availableSet = new Set([...available.map((item) => item.toLowerCase()), ...staples.map((item) => item.toLowerCase())])
+export function suggestDishesFromIngredients(repo: Dish[], available: string[], staples: Staple[]) {
+  const availableSet = new Set([
+    ...available.map((item) => item.toLowerCase()),
+    ...staples.map((item) => item.toLowerCase()),
+  ])
+
   return repo.filter((dish) =>
     dish.mainIngredients.every((ingredient) => availableSet.has(ingredient.toLowerCase())),
   )
@@ -233,10 +74,10 @@ export function suggestDishesFromIngredients(repo: Dish[], available: string[], 
 export function computeIngredientsNeeded(
   repo: Dish[],
   plan: WeeklyPlan,
-  staples: string[],
+  staples: Staple[],
   scope: 'today' | 'tomorrow' | 'week' | DayKey,
 ) {
-  const stapleSet = getStaplesSet(staples)
+  const stapleSet = new Set(staples.map((item) => item.toLowerCase()))
   const dayKeys: DayKey[] =
     scope === 'today'
       ? [getTodayKey()]
@@ -267,9 +108,7 @@ export function computeIngredientsNeeded(
         if (!dish) return
 
         dish.mainIngredients.forEach((ingredient) => {
-          const key = ingredient.toLowerCase()
-          if (stapleSet.has(key)) return
-
+          if (stapleSet.has(ingredient.toLowerCase())) return
           counts[meal][ingredient] = (counts[meal][ingredient] ?? 0) + 1
           counts.total[ingredient] = (counts.total[ingredient] ?? 0) + 1
         })
@@ -284,7 +123,7 @@ export function generatePlanFromFridge(
   repo: Dish[],
   plan: WeeklyPlan,
   available: string[],
-  staples: string[],
+  staples: Staple[],
   includeGujarati: boolean,
 ) {
   let makeable = suggestDishesFromIngredients(repo, available, staples)
@@ -377,6 +216,26 @@ export function generatePlanFromFridge(
     filledCount,
     makeableCount: makeable.length,
   }
+}
+
+export function getOverlappingDishes(repo: Dish[], dishId: string, staples: Staple[]) {
+  const original = getDishById(repo, dishId)
+  if (!original) return []
+
+  const originalSet = new Set(original.mainIngredients.map((ingredient) => ingredient.toLowerCase()))
+  const stapleSet = new Set(staples.map((item) => item.toLowerCase()))
+
+  return repo
+    .filter((dish) => dish.id !== dishId)
+    .map((dish) => {
+      const overlap = dish.mainIngredients.filter((ingredient) => {
+        const key = ingredient.toLowerCase()
+        return !stapleSet.has(key) && originalSet.has(key)
+      })
+      return { dish, overlap }
+    })
+    .filter((item) => item.overlap.length > 0)
+    .sort((a, b) => b.overlap.length - a.overlap.length)
 }
 
 export async function captureLegacySnapshot(state: LocalKitchenState): Promise<LegacySnapshot> {

@@ -102,6 +102,10 @@ a {
   padding: 1rem;
 }
 
+.mk-auth-panel {
+  width: min(100%, 29rem);
+}
+
 .mk-subpanel {
   border: 2px dashed rgb(26 71 49 / 0.25);
   border-radius: 20px;
@@ -113,6 +117,7 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   border-radius: 999px;
   border: 2px solid var(--green);
   font-weight: 700;
@@ -122,6 +127,17 @@ a {
 
 .mk-button:hover {
   transform: translate(-2px, -2px);
+}
+
+.mk-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.mk-button-block {
+  width: 100%;
+  min-height: 3rem;
 }
 
 .mk-button-primary {
@@ -202,6 +218,78 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.mk-profile-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.mk-profile-card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 1rem;
+  border: 2px solid rgb(26 71 49 / 0.16);
+  border-radius: 22px;
+  background: rgb(255 255 255 / 0.82);
+  color: var(--green);
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.mk-profile-card:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+}
+
+.mk-profile-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.mk-profile-card-selected {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--yellow) 38%, white);
+}
+
+.mk-profile-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.8rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgb(26 71 49 / 0.08);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mk-auth-feedback {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 2px solid rgb(26 71 49 / 0.16);
+  border-radius: 18px;
+  background: rgb(232 237 203 / 0.45);
+  color: var(--green-muted);
+}
+
+.mk-auth-feedback-error {
+  border-color: color-mix(in srgb, var(--danger) 55%, white);
+  background: color-mix(in srgb, var(--danger) 10%, white);
+  color: var(--danger);
+}
+
+.mk-auth-loading-badge {
+  width: 3rem;
+  height: 3rem;
+  border: 2px solid rgb(26 71 49 / 0.2);
+  border-top-color: var(--green);
+  border-radius: 999px;
+  animation: mk-spin 900ms linear infinite;
 }
 
 .mk-field {
@@ -309,6 +397,7 @@ a {
   color: var(--green);
   font-weight: 700;
   font-size: 0.9rem;
+  cursor: pointer;
 }
 
 .mk-chip-soft {
@@ -392,6 +481,122 @@ a {
   background: var(--bg);
 }
 
+.mk-modal-card {
+  margin: auto 1rem 1rem;
+  width: min(100%, 430px);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border: 2px solid var(--green);
+  border-radius: 24px;
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+  padding: 1rem;
+}
+
+.mk-inline-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mk-button-pad {
+  min-height: 2.75rem;
+  padding: 0.55rem 1rem;
+}
+
+.mk-button-pad-sm {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.85rem;
+}
+
+.mk-button-pad-xs {
+  min-height: 2rem;
+  padding: 0.35rem 0.7rem;
+}
+
+.mk-entity-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.mk-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid var(--green);
+  border-radius: 16px;
+  background: rgb(245 245 200 / 0.8);
+  object-fit: cover;
+  font-size: 1.6rem;
+}
+
+.mk-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.mk-check-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 0.9rem;
+  border: 2px solid rgb(26 71 49 / 0.16);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.84);
+}
+
+.mk-select-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem;
+  border: 2px solid rgb(26 71 49 / 0.14);
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.7);
+  text-align: left;
+}
+
+.mk-select-row-active {
+  border-color: var(--green);
+  background: rgb(245 230 66 / 0.34);
+  box-shadow: var(--shadow-sm);
+}
+
+.mk-scroll-panel {
+  max-height: 20rem;
+  overflow: auto;
+}
+
+.mk-inline-link {
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.mk-day-row-button {
+  border: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+@keyframes mk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (min-width: 640px) {
   .mk-app-frame {
     padding: 1.5rem;
@@ -410,6 +615,10 @@ a {
   .mk-card-grid,
   .mk-two-column-grid,
   .mk-three-column-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mk-profile-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
