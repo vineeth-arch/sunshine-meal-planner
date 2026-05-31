@@ -167,3 +167,138 @@ export interface Household {
   createdAt: Timestamp
   updatedAt: Timestamp
 }
+
+export interface HouseholdDocument {
+  id: string
+  name: string
+  ownerUid: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface DishDocument {
+  id: string
+  name: string
+  category: DishCategory
+  emoji: string
+  recipe: string
+  youtubeUrl: string
+  referenceText: string
+  imageUrl: string
+  createdBy: string
+  updatedBy: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface CreateDishInput {
+  name: string
+  category: DishCategory
+  emoji?: string
+  recipe?: string
+  youtubeUrl?: string
+  referenceText?: string
+  imageUrl?: string
+}
+
+export interface UpdateDishInput {
+  name?: string
+  category?: DishCategory
+  emoji?: string
+  recipe?: string
+  youtubeUrl?: string
+  referenceText?: string
+  imageUrl?: string
+}
+
+export interface IngredientDocument {
+  id: string
+  name: string
+  emoji: string
+  malayalamName: string
+  gujaratiName: string
+  imageUrl: string
+  createdBy: string
+  updatedBy: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface CreateIngredientInput {
+  name: string
+  emoji?: string
+  malayalamName?: string
+  gujaratiName?: string
+  imageUrl?: string
+}
+
+export interface UpdateIngredientInput {
+  name?: string
+  emoji?: string
+  malayalamName?: string
+  gujaratiName?: string
+  imageUrl?: string
+}
+
+export interface PantryItemDocument {
+  id: string
+  ingredientId: string
+  name: string
+  quantity: string
+  unit: string
+  status: string
+  updatedBy: string
+  updatedAt: Timestamp
+}
+
+export interface UpsertPantryItemInput {
+  ingredientId: string
+  name: string
+  quantity: string
+  unit: string
+  status: string
+}
+
+export interface WeeklyPlanDocument {
+  id: string
+  weekStart: string
+  createdBy: string
+  updatedBy: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface MealSlotDocument {
+  id: string
+  day: DayKey
+  mealType: MealName
+  slotType: string
+  dishId: string
+  position: number
+  notes: string
+  updatedBy: string
+  updatedAt: Timestamp
+}
+
+export interface UpdateMealSlotInput {
+  day: DayKey
+  mealType: MealName
+  slotType: string
+  dishId: string
+  position: number
+  notes?: string
+}
+
+export interface HouseholdSettingsDocument {
+  id: 'app'
+  schemaVersion: number
+  regionPreferences: string[]
+  enabledMealTypes: MealName[]
+  updatedAt: Timestamp
+}
+
+export interface UpdateHouseholdSettingsInput {
+  schemaVersion?: number
+  regionPreferences?: string[]
+  enabledMealTypes?: MealName[]
+}
