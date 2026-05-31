@@ -1,4 +1,4 @@
-import { addDoc, deleteDoc, getDocs, setDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { deleteDoc, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore'
 
 import type { CreateDishInput, DishDocument, UpdateDishInput } from '../../types/domain'
 import {
@@ -6,6 +6,7 @@ import {
   asOptionalString,
   asRecord,
   asString,
+  asStringArray,
   asTimestamp,
   readRequiredDoc,
   requireHouseholdAccess,
@@ -21,6 +22,7 @@ function mapDishDocument(id: string, data: unknown): DishDocument {
     id,
     name: asString(record.name, 'name'),
     category: asDishCategory(record.category),
+    mainIngredients: asStringArray(record.mainIngredients ?? [], 'mainIngredients'),
     emoji: asString(record.emoji, 'emoji'),
     recipe: asOptionalString(record.recipe, 'recipe'),
     youtubeUrl: asOptionalString(record.youtubeUrl, 'youtubeUrl'),
@@ -31,6 +33,11 @@ function mapDishDocument(id: string, data: unknown): DishDocument {
     createdAt: asTimestamp(record.createdAt, 'createdAt'),
     updatedAt: asTimestamp(record.updatedAt, 'updatedAt'),
   }
+}
+
+function normalizeDishId(input: CreateDishInput) {
+  const source = input.id?.trim() || input.name.trim().toLowerCase()
+  return source.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
 export async function getDishes(context: FirestoreServiceContext): Promise<DishDocument[]> {
@@ -47,9 +54,11 @@ export async function createDish(
 ): Promise<DishDocument> {
   return withServiceError('Could not create dish', async () => {
     const access = requireHouseholdAccess(context, { requireEdit: true })
-    const docRef = await addDoc(access.collections.dishes, {
+    const docRef = doc(access.collections.dishes, normalizeDishId(input))
+    await setDoc(docRef, {
       name: input.name.trim(),
       category: input.category,
+      mainIngredients: (input.mainIngredients ?? []).map((item) => item.trim()).filter(Boolean),
       emoji: input.emoji?.trim() || '🍽️',
       recipe: input.recipe?.trim() ?? '',
       youtubeUrl: input.youtubeUrl?.trim() ?? '',
@@ -82,6 +91,9 @@ export async function updateDish(
 
     if (input.name !== undefined) payload.name = input.name.trim()
     if (input.category !== undefined) payload.category = input.category
+    if (input.mainIngredients !== undefined) {
+      payload.mainIngredients = input.mainIngredients.map((item) => item.trim()).filter(Boolean)
+    }
     if (input.emoji !== undefined) payload.emoji = input.emoji.trim()
     if (input.recipe !== undefined) payload.recipe = input.recipe.trim()
     if (input.youtubeUrl !== undefined) payload.youtubeUrl = input.youtubeUrl.trim()

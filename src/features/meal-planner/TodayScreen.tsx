@@ -7,7 +7,7 @@ export function TodayScreen() {
       day={getTodayKey()}
       eyebrow="Today"
       title="Today's family menu"
-      description="Plan breakfast, lunch, and dinner from the same local data used by the legacy app."
+      description="Plan breakfast, lunch, and dinner from the household Firestore meal plan."
     />
   )
 }

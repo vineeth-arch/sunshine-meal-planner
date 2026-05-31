@@ -34,6 +34,9 @@ export interface PantryItem {
   emoji: string
   detail?: string
   image?: string
+  quantity?: string
+  unit?: string
+  status?: string
 }
 
 export interface MealBreakfast {
@@ -180,6 +183,7 @@ export interface DishDocument {
   id: string
   name: string
   category: DishCategory
+  mainIngredients: string[]
   emoji: string
   recipe: string
   youtubeUrl: string
@@ -192,8 +196,10 @@ export interface DishDocument {
 }
 
 export interface CreateDishInput {
+  id?: string
   name: string
   category: DishCategory
+  mainIngredients?: string[]
   emoji?: string
   recipe?: string
   youtubeUrl?: string
@@ -204,6 +210,7 @@ export interface CreateDishInput {
 export interface UpdateDishInput {
   name?: string
   category?: DishCategory
+  mainIngredients?: string[]
   emoji?: string
   recipe?: string
   youtubeUrl?: string
@@ -225,6 +232,7 @@ export interface IngredientDocument {
 }
 
 export interface CreateIngredientInput {
+  id?: string
   name: string
   emoji?: string
   malayalamName?: string
@@ -243,6 +251,7 @@ export interface UpdateIngredientInput {
 export interface PantryItemDocument {
   id: string
   ingredientId: string
+  kind: 'ingredient' | 'staple'
   name: string
   quantity: string
   unit: string
@@ -253,10 +262,48 @@ export interface PantryItemDocument {
 
 export interface UpsertPantryItemInput {
   ingredientId: string
+  kind?: 'ingredient' | 'staple'
   name: string
   quantity: string
   unit: string
   status: string
+}
+
+export interface StapleDocument {
+  id: string
+  name: string
+  createdBy: string
+  updatedBy: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export type KitchenSyncState = 'idle' | 'saving' | 'saved' | 'failed'
+
+export interface KitchenImportStats {
+  dishAdd: number
+  dishUpd: number
+  ingAdd: number
+  ingUpd: number
+  stapleAdd: number
+  stapleUpd: number
+}
+
+export interface MigrationPreview {
+  hasLegacyData: boolean
+  hasLocalImages: boolean
+  dishes: Dish[]
+  ingredients: Ingredient[]
+  staples: Staple[]
+  plan: WeeklyPlan | null
+}
+
+export interface MigrationSummary {
+  created: number
+  updated: number
+  skipped: number
+  failed: number
+  failures: string[]
 }
 
 export interface WeeklyPlanDocument {

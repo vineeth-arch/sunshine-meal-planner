@@ -2,10 +2,9 @@ import { useMemo, useState, type ReactNode } from 'react'
 
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { DAYS, DAY_FULL } from '../../lib/date/plans'
 import { useLocalKitchen } from '../../app/local-kitchen-context'
-import { canEdit } from '../auth/access'
-import { useAuth } from '../auth/use-auth'
 import type { DayKey, DayPlan, Dish, DishCategory } from '../../types/domain'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
 
@@ -70,8 +69,12 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
     getDishById,
     getIngredientsNeeded,
     getOverlappingDishes,
+    loading,
+    error,
+    refreshData,
+    syncMessage,
+    canEditData,
   } = useLocalKitchen()
-  const { profile } = useAuth()
   const [picker, setPicker] = useState<PickerState | null>(null)
   const [ideasForDishId, setIdeasForDishId] = useState<string | null>(null)
   const [showIngredientsNeeded, setShowIngredientsNeeded] = useState(false)
@@ -90,11 +93,32 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
 
   const ingredientsNeeded = getIngredientsNeeded(day)
   const overlapping = ideasForDishId ? getOverlappingDishes(ideasForDishId) : []
-  const allowEdit = canEdit(profile)
+  const allowEdit = canEditData
 
   return (
     <div className="mk-stack-lg">
       <ScreenHeader eyebrow={eyebrow} title={title} description={description} />
+
+      {syncMessage ? (
+        <PanelCard>
+          <p className="mk-meta">{syncMessage}</p>
+        </PanelCard>
+      ) : null}
+
+      {error ? (
+        <PanelCard className="mk-stack-sm">
+          <EmptyState title="Could not load meal plan" description={error} />
+          <button type="button" className="mk-button mk-button-secondary mk-button-pad-sm" onClick={() => void refreshData()}>
+            Retry
+          </button>
+        </PanelCard>
+      ) : null}
+
+      {loading ? (
+        <PanelCard>
+          <p className="mk-meta">Loading this week's Firestore plan...</p>
+        </PanelCard>
+      ) : null}
 
       <PanelCard className="mk-stack-sm">
         <div className="mk-inline-actions">
@@ -124,7 +148,7 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
                     <button
                       type="button"
                       className="mk-button mk-button-secondary mk-button-pad-sm"
-                      onClick={() => clearSlot(day, slot.meal, slot.field)}
+                      onClick={() => void clearSlot(day, slot.meal, slot.field)}
                     >
                       Clear
                     </button>
@@ -182,7 +206,7 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
             setSelectedIngredients([])
           }}
           onSave={(dishIds) => {
-            updateSlot(day, picker.meal, picker.field, picker.allowsMultiple ? dishIds : dishIds[0] ?? '')
+            void updateSlot(day, picker.meal, picker.field, picker.allowsMultiple ? dishIds : dishIds[0] ?? '')
             setPicker(null)
             setSelectedIngredients([])
           }}

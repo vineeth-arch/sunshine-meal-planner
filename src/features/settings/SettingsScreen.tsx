@@ -1,24 +1,32 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { useLocalKitchen } from '../../app/local-kitchen-context'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { canEdit } from '../auth/access'
-import { useAuth } from '../auth/use-auth'
 
 export function SettingsScreen() {
-  const { state, exportJson, importJson, setIntegrations } = useLocalKitchen()
-  const { profile } = useAuth()
+  const {
+    state,
+    exportJson,
+    importJson,
+    setIntegrations,
+    syncMessage,
+    error,
+    refreshData,
+    canEditData,
+    canImportExport,
+  } = useLocalKitchen()
   const [importText, setImportText] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [integrations, setLocalIntegrations] = useState(state.integrations)
-  const allowEdit = canEdit(profile)
+  const allowEdit = canEditData
 
-  function runImport(text: string) {
+  async function runImport(text: string) {
     try {
-      const stats = importJson(text)
+      const stats = await importJson(text)
       setMessage(
-        `Imported: +${stats.dishAdd} dishes, ${stats.dishUpd} updated, +${stats.ingAdd} ingredients, ${stats.ingUpd} ingredient updates.`,
+        `Imported: +${stats.dishAdd} dishes, ${stats.dishUpd} dish updates, +${stats.ingAdd} ingredients, ${stats.ingUpd} ingredient updates, +${stats.stapleAdd} staples, ${stats.stapleUpd} staple updates.`,
       )
       setImportText('')
     } catch (error) {
@@ -30,7 +38,7 @@ export function SettingsScreen() {
     const file = event.target.files?.[0]
     if (!file) return
     const text = await file.text()
-    runImport(text)
+    await runImport(text)
     event.target.value = ''
   }
 
@@ -44,13 +52,28 @@ export function SettingsScreen() {
     <div className="mk-stack-lg">
       <ScreenHeader
         eyebrow="Settings"
-        title="Local settings and backup tools"
-        description="Import and export the legacy JSON shape, keep integrations local, and leave auth and Firebase out of this phase."
+        title="Local settings and migration tools"
+        description="Keep integrations local to this browser while Firestore handles household kitchen data."
       />
+
+      {syncMessage ? (
+        <PanelCard>
+          <p className="mk-meta">{syncMessage}</p>
+        </PanelCard>
+      ) : null}
+
+      {error ? (
+        <PanelCard className="mk-stack-sm">
+          <EmptyState title="Could not load settings context" description={error} />
+          <button type="button" className="mk-button mk-button-secondary mk-button-pad-sm" onClick={() => void refreshData()}>
+            Retry
+          </button>
+        </PanelCard>
+      ) : null}
 
       {!allowEdit ? (
         <PanelCard>
-          <p className="mk-meta">Viewer access is read-only. Export is available, but imports and local settings edits are disabled.</p>
+          <p className="mk-meta">Viewer access is read-only. Local integrations are visible but cannot be edited.</p>
         </PanelCard>
       ) : null}
 
@@ -65,45 +88,51 @@ export function SettingsScreen() {
         <p className="mk-copy">
           JSON export preserves the legacy schema for dishes, ingredients, and staples. Local IndexedDB image blobs are not included.
         </p>
-        <div className="mk-inline-actions">
-          <button
-            type="button"
-            className="mk-button mk-button-primary mk-button-pad"
-            onClick={() => {
-              const blob = new Blob([exportJson], { type: 'application/json' })
-              const url = URL.createObjectURL(blob)
-              const anchor = document.createElement('a')
-              anchor.href = url
-              anchor.download = 'moms-kitchen-cookbook.json'
-              anchor.click()
-              URL.revokeObjectURL(url)
-              setMessage('Downloaded current JSON export.')
-            }}
-          >
-            Download JSON
-          </button>
-          <button
-            type="button"
-            className="mk-button mk-button-secondary mk-button-pad"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(exportJson)
-                setMessage('Copied export JSON to clipboard.')
-              } catch {
-                setMessage('Clipboard copy failed in this browser.')
-              }
-            }}
-          >
-            Copy JSON
-          </button>
-        </div>
-        <textarea className="mk-input mk-textarea" rows={10} readOnly value={exportJson} />
+        {canImportExport ? (
+          <>
+            <div className="mk-inline-actions">
+              <button
+                type="button"
+                className="mk-button mk-button-primary mk-button-pad"
+                onClick={() => {
+                  const blob = new Blob([exportJson], { type: 'application/json' })
+                  const url = URL.createObjectURL(blob)
+                  const anchor = document.createElement('a')
+                  anchor.href = url
+                  anchor.download = 'moms-kitchen-cookbook.json'
+                  anchor.click()
+                  URL.revokeObjectURL(url)
+                  setMessage('Downloaded current JSON export.')
+                }}
+              >
+                Download JSON
+              </button>
+              <button
+                type="button"
+                className="mk-button mk-button-secondary mk-button-pad"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(exportJson)
+                    setMessage('Copied export JSON to clipboard.')
+                  } catch {
+                    setMessage('Clipboard copy failed in this browser.')
+                  }
+                }}
+              >
+                Copy JSON
+              </button>
+            </div>
+            <textarea className="mk-input mk-textarea" rows={10} readOnly value={exportJson} />
+          </>
+        ) : (
+          <p className="mk-meta">Export is admin-only while Firestore migration is in progress.</p>
+        )}
       </PanelCard>
 
       <PanelCard className="mk-stack-sm">
         <h3 className="mk-subtitle">Import data</h3>
         <p className="mk-copy">Existing items are updated and new ones are added. Missing items are not deleted.</p>
-        {allowEdit ? (
+        {canImportExport ? (
           <>
             <label className="mk-field">
               Import JSON file
@@ -119,21 +148,21 @@ export function SettingsScreen() {
             <button
               type="button"
               className="mk-button mk-button-primary mk-button-pad"
-              onClick={() => runImport(importText)}
+              onClick={() => void runImport(importText)}
               disabled={!importText.trim()}
             >
               Import pasted JSON
             </button>
           </>
         ) : (
-          <p className="mk-meta">Import controls are hidden for viewer accounts.</p>
+          <p className="mk-meta">Import controls are available to admin accounts only.</p>
         )}
       </PanelCard>
 
       <PanelCard className="mk-stack-sm">
         <form className="mk-stack-sm" onSubmit={handleIntegrationsSubmit}>
           <h3 className="mk-subtitle">Integrations</h3>
-          <p className="mk-copy">These values stay local for compatibility with the old app. Firebase and auth are intentionally not wired in.</p>
+          <p className="mk-copy">These values stay local on this device. Firestore sync does not store them.</p>
           <label className="mk-field">
             LLM base URL
             <input

@@ -20,14 +20,14 @@ export function TomorrowScreen() {
           <button
             type="button"
             className="mk-button mk-button-primary mk-button-pad"
-            onClick={() => copyDay(getTodayKey(), getTomorrowKey())}
+            onClick={() => void copyDay(getTodayKey(), getTomorrowKey())}
           >
             Copy today
           </button>
           <button
             type="button"
             className="mk-button mk-button-secondary mk-button-pad"
-            onClick={() => clearDay(getTomorrowKey())}
+            onClick={() => void clearDay(getTomorrowKey())}
           >
             Clear tomorrow
           </button>

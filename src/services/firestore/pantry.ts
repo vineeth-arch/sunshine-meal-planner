@@ -1,4 +1,4 @@
-import { doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore'
+import { deleteDoc, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore'
 
 import type { PantryItemDocument, UpsertPantryItemInput } from '../../types/domain'
 import {
@@ -19,6 +19,7 @@ function mapPantryItemDocument(id: string, data: unknown): PantryItemDocument {
   return {
     id,
     ingredientId: asString(record.ingredientId, 'ingredientId'),
+    kind: (record.kind === 'staple' ? 'staple' : 'ingredient'),
     name: asString(record.name, 'name'),
     quantity: asOptionalString(record.quantity, 'quantity'),
     unit: asOptionalString(record.unit, 'unit'),
@@ -52,6 +53,7 @@ export async function upsertPantryItem(
       itemRef,
       {
         ingredientId: itemId,
+        kind: input.kind === 'staple' ? 'staple' : 'ingredient',
         name: input.name.trim(),
         quantity: input.quantity.trim(),
         unit: input.unit.trim(),
@@ -63,5 +65,16 @@ export async function upsertPantryItem(
     )
 
     return readRequiredDoc(itemRef, mapPantryItemDocument, 'The pantry item could not be loaded.')
+  })
+}
+
+export async function deletePantryItem(
+  context: FirestoreServiceContext,
+  itemId: string,
+): Promise<void> {
+  return withServiceError('Could not delete pantry item', async () => {
+    const access = requireHouseholdAccess(context, { requireEdit: true })
+    const itemRef = doc(access.collections.pantryItems, itemId.trim())
+    await deleteDoc(itemRef)
   })
 }

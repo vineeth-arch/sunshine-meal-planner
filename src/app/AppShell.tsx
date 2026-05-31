@@ -1,12 +1,14 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { MobileNav } from '../components/navigation/MobileNav'
+import { useLocalKitchen } from './local-kitchen-context'
 import { isAdmin } from '../features/auth/access'
 import { getProfileLabelFromEmail } from '../features/auth/profile-options'
 import { useAuth } from '../features/auth/use-auth'
 
 export function AppShell() {
   const { profile, signOutUser, user } = useAuth()
+  const { syncState, syncMessage, loading } = useLocalKitchen()
   const dateLabel = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     month: 'short',
@@ -23,6 +25,10 @@ export function AppShell() {
             <p className="mk-eyebrow">Mom&apos;s Kitchen</p>
             <h1 className="mk-title">Family planning hub</h1>
             <p className="mk-meta">{signedInLabel} • {dateLabel}</p>
+            <p className="mk-meta">
+              {loading ? 'Loading Firestore data' : syncState === 'saving' ? 'Saving' : syncState === 'failed' ? 'Failed' : syncState === 'saved' ? 'Saved' : 'Synced'}
+              {syncMessage ? ` • ${syncMessage}` : ''}
+            </p>
           </div>
           <div className="mk-topbar-actions">
             <NavLink to="/ingredients" className="mk-chip mk-chip-soft">

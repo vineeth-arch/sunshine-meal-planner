@@ -1,4 +1,4 @@
-import { addDoc, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore'
+import { deleteDoc, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore'
 
 import type {
   CreateIngredientInput,
@@ -34,6 +34,11 @@ function mapIngredientDocument(id: string, data: unknown): IngredientDocument {
   }
 }
 
+function normalizeIngredientId(name: string, fallback?: string) {
+  const source = fallback?.trim() || name.trim().toLowerCase()
+  return source.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
 export async function getIngredients(context: FirestoreServiceContext): Promise<IngredientDocument[]> {
   return withServiceError('Could not load ingredients', async () => {
     const access = requireHouseholdAccess(context)
@@ -48,7 +53,8 @@ export async function createIngredient(
 ): Promise<IngredientDocument> {
   return withServiceError('Could not create ingredient', async () => {
     const access = requireHouseholdAccess(context, { requireEdit: true })
-    const docRef = await addDoc(access.collections.ingredients, {
+    const docRef = doc(access.collections.ingredients, normalizeIngredientId(input.name, input.id))
+    await setDoc(docRef, {
       name: input.name.trim(),
       emoji: input.emoji?.trim() || '🥬',
       malayalamName: input.malayalamName?.trim() ?? '',
@@ -66,6 +72,10 @@ export async function createIngredient(
       'The new ingredient could not be loaded after creation.',
     )
   })
+}
+
+export function getIngredientId(name: string, fallback?: string) {
+  return normalizeIngredientId(name, fallback)
 }
 
 export async function updateIngredient(

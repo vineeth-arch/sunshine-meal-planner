@@ -1,39 +1,41 @@
 import {
   createContext,
+  useCallback,
   useContext,
-  useMemo,
+  useEffect,
+  useRef,
   useState,
   type PropsWithChildren,
 } from 'react'
 
+import { useAuth } from '../features/auth/use-auth'
 import type {
   DayKey,
   Dish,
   Ingredient,
   Integrations,
+  KitchenImportStats,
+  KitchenSyncState,
   LocalKitchenState,
+  MigrationPreview,
+  MigrationSummary,
+  PantryItem,
   Staple,
   WeeklyPlan,
 } from '../types/domain'
 import {
   computeIngredientsNeeded,
   copyDayPlan,
-  derivePantryItems,
   generatePlanFromFridge,
   getDishById,
   getOverlappingDishes,
   loadKitchenState,
-  persistIngredients,
   persistIntegrations,
-  persistPlan,
-  persistRepo,
-  persistStaples,
   suggestDishesFromIngredients,
   syncIngredientsFromRepo,
   updateMealSlot,
 } from '../services/local/kitchen'
 import {
-  applyImportPayload,
   buildExportPayload,
   parseImportPayload,
 } from '../services/local/importExportService'
@@ -45,6 +47,28 @@ import {
   saveDishImage,
   saveIngredientImage,
 } from '../services/local/indexedDbImageService'
+import {
+  persistIngredients,
+  persistLastWeekPlan,
+  persistPlan,
+  persistRepo,
+  persistStaples,
+  readRawStorageValue,
+} from '../services/local/localStorageService'
+import { listDishImagesAsDataUrls, listIngredientImagesAsDataUrls } from '../services/local/imageStore'
+import { canEdit, isAdmin } from '../features/auth/access'
+import { getDishes, createDish, deleteDish as deleteDishDocument, updateDish } from '../services/firestore/dishes'
+import {
+  createIngredient,
+  deleteIngredient as deleteIngredientDocument,
+  getIngredientId,
+  getIngredients,
+  updateIngredient,
+} from '../services/firestore/ingredients'
+import { deletePantryItem, getPantryItems, upsertPantryItem } from '../services/firestore/pantry'
+import { deleteStaple, getStaples, getStapleId, upsertStaple } from '../services/firestore/staples'
+import { buildWeeklyPlanFromSlots, getWeeklyPlan, saveWeeklyPlan } from '../services/firestore/weeklyPlans'
+import { getWeekStartDate } from '../lib/date/plans'
 
 type DishDraft = Omit<Dish, 'id'> & { id?: string }
 type IngredientDraft = Ingredient & { previousName?: string }
@@ -57,24 +81,40 @@ type FridgePlanResult = {
 type LocalKitchenContextValue = {
   state: LocalKitchenState
   exportJson: string
-  setPlan(nextPlan: WeeklyPlan): void
+  loading: boolean
+  error: string | null
+  syncState: KitchenSyncState
+  syncMessage: string | null
+  canEditData: boolean
+  canImportExport: boolean
+  refreshData(): Promise<void>
+  setPlan(nextPlan: WeeklyPlan): Promise<void>
   setIntegrations(integrations: Integrations): void
   saveDish(draft: DishDraft, imageFile?: File | null, removeLocalImage?: boolean): Promise<void>
   deleteDish(id: string): Promise<void>
   saveIngredient(draft: IngredientDraft, imageFile?: File | null, removeLocalImage?: boolean): Promise<void>
   deleteIngredient(name: string): Promise<void>
-  addStaple(name: string): void
-  removeStaple(name: string): void
-  updateSlot(day: DayKey, meal: 'breakfast' | 'lunch' | 'dinner', field: string, value: string | string[]): void
-  clearSlot(day: DayKey, meal: 'breakfast' | 'lunch' | 'dinner', field: string): void
-  copyDay(fromDay: DayKey, toDay: DayKey): void
-  clearDay(day: DayKey): void
-  importJson(text: string): { dishAdd: number; dishUpd: number; ingAdd: number; ingUpd: number }
-  runFridgePlan(available: string[], includeGujarati: boolean): FridgePlanResult
+  addStaple(name: string): Promise<void>
+  removeStaple(name: string): Promise<void>
+  updatePantryItem(item: PantryItem): Promise<void>
+  updateSlot(day: DayKey, meal: 'breakfast' | 'lunch' | 'dinner', field: string, value: string | string[]): Promise<void>
+  clearSlot(day: DayKey, meal: 'breakfast' | 'lunch' | 'dinner', field: string): Promise<void>
+  copyDay(fromDay: DayKey, toDay: DayKey): Promise<void>
+  clearDay(day: DayKey): Promise<void>
+  importJson(text: string): Promise<KitchenImportStats>
+  runFridgePlan(available: string[], includeGujarati: boolean): Promise<FridgePlanResult>
   suggestFromIngredients(available: string[]): Dish[]
   getDishById(id: string): Dish | null
   getOverlappingDishes(dishId: string): ReturnType<typeof getOverlappingDishes>
   getIngredientsNeeded(scope: 'today' | 'tomorrow' | 'week' | DayKey): ReturnType<typeof computeIngredientsNeeded>
+  getMigrationPreview(): Promise<MigrationPreview>
+  runLegacyMigration(): Promise<MigrationSummary>
+}
+
+const CATEGORY_COLORS: Record<Dish['category'], string> = {
+  sabji: '#d4edda',
+  curry: '#fff3cd',
+  gujarati: '#e2d9f3',
 }
 
 const LocalKitchenContext = createContext<LocalKitchenContextValue | null>(null)
@@ -86,7 +126,7 @@ function normalizeDishDraft(draft: DishDraft, existing?: Dish | null): Dish {
     category: draft.category,
     mainIngredients: draft.mainIngredients.map((item) => item.trim()).filter(Boolean),
     emoji: draft.emoji.trim() || existing?.emoji || '🥗',
-    bgColor: draft.bgColor || existing?.bgColor || '#d4edda',
+    bgColor: draft.bgColor || existing?.bgColor || CATEGORY_COLORS[draft.category],
     referenceText: draft.referenceText?.trim() ?? '',
     recipe: draft.recipe?.trim() ?? '',
     youtube: draft.youtube?.trim() ?? '',
@@ -104,168 +144,481 @@ function normalizeIngredientDraft(draft: IngredientDraft): Ingredient {
   }
 }
 
-export function LocalKitchenProvider({ children }: PropsWithChildren) {
-  const [state, setState] = useState<LocalKitchenState>(() => loadKitchenState())
+function derivePantryItems(
+  ingredients: Ingredient[],
+  staples: Staple[],
+  storedPantry: Array<{ id: string; ingredientId: string; kind: 'ingredient' | 'staple'; name: string; quantity: string; unit: string; status: string }>,
+): PantryItem[] {
+  const pantryById = new Map(storedPantry.map((item) => [item.ingredientId, item]))
 
-  function replaceState(nextState: LocalKitchenState) {
-    setState({
-      ...nextState,
-      pantry: derivePantryItems(nextState.ingredients, nextState.staples),
-    })
+  const ingredientItems = ingredients.map((ingredient) => {
+    const id = getIngredientId(ingredient.name)
+    const pantry = pantryById.get(id)
+
+    return {
+      id,
+      kind: 'ingredient' as const,
+      name: ingredient.name,
+      emoji: ingredient.emoji || '🥗',
+      detail: [ingredient.malayalam, ingredient.gujarati].filter(Boolean).join(' · '),
+      image: ingredient.image,
+      quantity: pantry?.quantity ?? '',
+      unit: pantry?.unit ?? '',
+      status: pantry?.status ?? 'unknown',
+    }
+  })
+
+  const stapleItems = staples.map((staple) => {
+    const id = getStapleId(staple)
+    const pantry = pantryById.get(id)
+
+    return {
+      id,
+      kind: 'staple' as const,
+      name: staple,
+      emoji: '🧂',
+      detail: 'Staple pantry item',
+      quantity: pantry?.quantity ?? '',
+      unit: pantry?.unit ?? '',
+      status: pantry?.status ?? 'available',
+    }
+  })
+
+  return [...ingredientItems, ...stapleItems].sort((left, right) => left.name.localeCompare(right.name))
+}
+
+function persistCache(state: LocalKitchenState) {
+  persistRepo(state.repo)
+  persistIngredients(state.ingredients)
+  persistStaples(state.staples)
+  persistPlan(state.plan)
+  persistLastWeekPlan(state.lastWeekPlan)
+}
+
+function mapFirestoreDishToDomain(dish: Awaited<ReturnType<typeof getDishes>>[number]): Dish {
+  return {
+    id: dish.id,
+    name: dish.name,
+    category: dish.category,
+    mainIngredients: dish.mainIngredients,
+    emoji: dish.emoji,
+    bgColor: CATEGORY_COLORS[dish.category],
+    referenceText: dish.referenceText,
+    recipe: dish.recipe,
+    youtube: dish.youtubeUrl,
+    image: dish.imageUrl,
   }
+}
 
-  function commitCollections(nextRepo: Dish[], nextIngredients: Ingredient[], nextStaples: Staple[]) {
-    persistRepo(nextRepo)
-    persistIngredients(nextIngredients)
-    persistStaples(nextStaples)
-    replaceState({
+function mapFirestoreIngredientToDomain(ingredient: Awaited<ReturnType<typeof getIngredients>>[number]): Ingredient {
+  return {
+    name: ingredient.name,
+    emoji: ingredient.emoji,
+    malayalam: ingredient.malayalamName,
+    gujarati: ingredient.gujaratiName,
+    image: ingredient.imageUrl,
+  }
+}
+
+export function LocalKitchenProvider({ children }: PropsWithChildren) {
+  const auth = useAuth()
+  const [state, setState] = useState<LocalKitchenState>(() => loadKitchenState())
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [syncState, setSyncState] = useState<KitchenSyncState>('idle')
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
+  const saveTimeoutRef = useRef<number | null>(null)
+  const canEditData = canEdit(auth.profile)
+  const canImportExport = isAdmin(auth.profile)
+
+  const setSavedState = useCallback((message: string) => {
+    setSyncState('saved')
+    setSyncMessage(message)
+
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = window.setTimeout(() => {
+      setSyncState('idle')
+      setSyncMessage(null)
+    }, 2500)
+  }, [])
+
+  const setFailedState = useCallback((message: string) => {
+    setSyncState('failed')
+    setSyncMessage(message)
+  }, [])
+
+  const runWrite = useCallback(async <T,>(message: string, operation: () => Promise<T>) => {
+    setSyncState('saving')
+    setSyncMessage('Saving...')
+
+    try {
+      const result = await operation()
+      setSavedState(message)
+      return result
+    } catch (caught) {
+      setFailedState(caught instanceof Error ? caught.message : 'Save failed.')
+      throw caught
+    }
+  }, [setFailedState, setSavedState])
+
+  const replaceState = useCallback((nextState: LocalKitchenState, options?: { persist?: boolean }) => {
+    setState(nextState)
+    if (options?.persist !== false) {
+      persistCache(nextState)
+    }
+  }, [])
+
+  const buildContextState = useCallback(async () => {
+    if (!auth.user || !auth.profile) {
+      return
+    }
+
+    const weekStart = getWeekStartDate()
+    const context = { user: auth.user, profile: auth.profile }
+    const [dishes, ingredients, staples, pantryItems, weeklyPlan] = await Promise.all([
+      getDishes(context),
+      getIngredients(context),
+      getStaples(context),
+      getPantryItems(context),
+      getWeeklyPlan(context, weekStart),
+    ])
+
+    const nextRepo = dishes.map(mapFirestoreDishToDomain)
+    const nextStaples = staples.map((item) => item.name)
+    const nextIngredients = ingredients.map(mapFirestoreIngredientToDomain)
+    const nextPlan = buildWeeklyPlanFromSlots(
+      weekStart,
+      weeklyPlan.mealSlots,
+    )
+
+    const nextState: LocalKitchenState = {
       ...state,
       repo: nextRepo,
-      ingredients: nextIngredients,
+      ingredients: syncIngredientsFromRepo(nextRepo, nextIngredients, nextStaples).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
       staples: nextStaples,
-      pantry: derivePantryItems(nextIngredients, nextStaples),
-    })
-  }
+      pantry: derivePantryItems(nextIngredients, nextStaples, pantryItems),
+      plan: nextPlan,
+      integrations: state.integrations,
+      settings: { ...state.settings, integrations: state.integrations },
+    }
 
-  async function saveDish(draft: DishDraft, imageFile?: File | null, removeLocalImage = false) {
+    replaceState(nextState)
+    setError(null)
+  }, [auth.profile, auth.user, replaceState, state])
+
+  const refreshData = useCallback(async () => {
+    if (!auth.user || !auth.profile) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      await buildContextState()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not load kitchen data.')
+    } finally {
+      setLoading(false)
+    }
+  }, [auth.profile, auth.user, buildContextState])
+
+  useEffect(() => {
+    if (auth.loading || auth.profileState === 'loading') {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void refreshData()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [auth.loading, auth.profileState, refreshData])
+
+  useEffect(() => () => {
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current)
+    }
+  }, [])
+
+  const savePlan = useCallback(async (nextPlan: WeeklyPlan) => {
+    if (!auth.user || !auth.profile) return
+
+    await runWrite('Saved meal plan.', async () => {
+      await saveWeeklyPlan({ user: auth.user, profile: auth.profile }, nextPlan)
+      replaceState({ ...state, plan: nextPlan })
+    })
+  }, [auth.profile, auth.user, replaceState, runWrite, state])
+
+  const ensureGeneratedIngredients = useCallback(async (repo: Dish[], ingredients: Ingredient[], staples: Staple[]) => {
+    const syncedIngredients = syncIngredientsFromRepo(repo, ingredients, staples).sort((a, b) => a.name.localeCompare(b.name))
+    const existing = new Set(ingredients.map((item) => item.name.toLowerCase()))
+    const missing = syncedIngredients.filter((item) => !existing.has(item.name.toLowerCase()))
+
+    if (!auth.user || !auth.profile) {
+      return syncedIngredients
+    }
+
+    for (const ingredient of missing) {
+      await createIngredient(
+        { user: auth.user, profile: auth.profile },
+        {
+          id: getIngredientId(ingredient.name),
+          name: ingredient.name,
+          emoji: ingredient.emoji,
+          malayalamName: ingredient.malayalam,
+          gujaratiName: ingredient.gujarati,
+          imageUrl: ingredient.image,
+        },
+      )
+    }
+
+    return syncedIngredients
+  }, [auth.profile, auth.user])
+
+  async function saveDishAction(draft: DishDraft, imageFile?: File | null, removeLocalImage = false) {
+    if (!auth.user || !auth.profile) return
+
     const existing = draft.id ? state.repo.find((dish) => dish.id === draft.id) ?? null : null
     const nextDish = normalizeDishDraft(draft, existing)
-    const nextRepo = existing
-      ? state.repo.map((dish) => (dish.id === nextDish.id ? nextDish : dish))
-      : [...state.repo, nextDish]
-    const nextIngredients = syncIngredientsFromRepo(nextRepo, state.ingredients, state.staples).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    )
 
-    persistRepo(nextRepo)
-    persistIngredients(nextIngredients)
+    await runWrite('Saved dish.', async () => {
+      if (existing) {
+        await updateDish(
+          { user: auth.user, profile: auth.profile },
+          nextDish.id,
+          {
+            name: nextDish.name,
+            category: nextDish.category,
+            mainIngredients: nextDish.mainIngredients,
+            emoji: nextDish.emoji,
+            recipe: nextDish.recipe,
+            youtubeUrl: nextDish.youtube,
+            referenceText: nextDish.referenceText,
+            imageUrl: nextDish.image,
+          },
+        )
+      } else {
+        await createDish(
+          { user: auth.user, profile: auth.profile },
+          {
+            id: nextDish.id,
+            name: nextDish.name,
+            category: nextDish.category,
+            mainIngredients: nextDish.mainIngredients,
+            emoji: nextDish.emoji,
+            recipe: nextDish.recipe,
+            youtubeUrl: nextDish.youtube,
+            referenceText: nextDish.referenceText,
+            imageUrl: nextDish.image,
+          },
+        )
+      }
 
-    if (imageFile) {
-      const blob = await compressImage(imageFile)
-      await saveDishImage(nextDish.id, blob)
-    } else if (removeLocalImage) {
-      await deleteDishImage(nextDish.id)
-    }
+      if (imageFile) {
+        const blob = await compressImage(imageFile)
+        await saveDishImage(nextDish.id, blob)
+      } else if (removeLocalImage) {
+        await deleteDishImage(nextDish.id)
+      }
 
-    replaceState({
-      ...state,
-      repo: nextRepo,
-      ingredients: nextIngredients,
-      pantry: derivePantryItems(nextIngredients, state.staples),
+      const nextRepo = existing
+        ? state.repo.map((dish) => (dish.id === nextDish.id ? nextDish : dish))
+        : [...state.repo, nextDish]
+      const nextIngredients = await ensureGeneratedIngredients(nextRepo, state.ingredients, state.staples)
+      replaceState({
+        ...state,
+        repo: nextRepo,
+        ingredients: nextIngredients,
+        pantry: derivePantryItems(nextIngredients, state.staples, []),
+      })
     })
   }
 
-  async function deleteDish(id: string) {
-    const nextRepo = state.repo.filter((dish) => dish.id !== id)
-    persistRepo(nextRepo)
-    await deleteDishImage(id)
-    replaceState({ ...state, repo: nextRepo })
+  async function deleteDishAction(id: string) {
+    if (!auth.user || !auth.profile) return
+
+    await runWrite('Deleted dish.', async () => {
+      await deleteDishDocument({ user: auth.user, profile: auth.profile }, id)
+      await deleteDishImage(id)
+      const nextRepo = state.repo.filter((dish) => dish.id !== id)
+      replaceState({ ...state, repo: nextRepo })
+    })
   }
 
-  async function saveIngredient(draft: IngredientDraft, imageFile?: File | null, removeLocalImage = false) {
+  async function saveIngredientAction(draft: IngredientDraft, imageFile?: File | null, removeLocalImage = false) {
+    if (!auth.user || !auth.profile) return
+
     const nextIngredient = normalizeIngredientDraft(draft)
     const previousName = draft.previousName?.trim()
-    const existingName = previousName || draft.name
-    const nextIngredients = state.ingredients.some(
-      (ingredient) => ingredient.name.toLowerCase() === existingName.toLowerCase(),
-    )
-      ? state.ingredients.map((ingredient) =>
-          ingredient.name.toLowerCase() === existingName.toLowerCase() ? nextIngredient : ingredient,
+    const ingredientId = getIngredientId(previousName || nextIngredient.name)
+
+    await runWrite('Saved ingredient.', async () => {
+      if (previousName) {
+        await updateIngredient(
+          { user: auth.user, profile: auth.profile },
+          ingredientId,
+          {
+            name: nextIngredient.name,
+            emoji: nextIngredient.emoji,
+            malayalamName: nextIngredient.malayalam,
+            gujaratiName: nextIngredient.gujarati,
+            imageUrl: nextIngredient.image,
+          },
         )
-      : [...state.ingredients, nextIngredient]
+      } else {
+        await createIngredient(
+          { user: auth.user, profile: auth.profile },
+          {
+            id: ingredientId,
+            name: nextIngredient.name,
+            emoji: nextIngredient.emoji,
+            malayalamName: nextIngredient.malayalam,
+            gujaratiName: nextIngredient.gujarati,
+            imageUrl: nextIngredient.image,
+          },
+        )
+      }
 
-    nextIngredients.sort((a, b) => a.name.localeCompare(b.name))
-    persistIngredients(nextIngredients)
-
-    if (imageFile) {
-      const blob = await compressImage(imageFile)
-      await saveIngredientImage(nextIngredient.name, blob)
-      if (previousName && previousName !== nextIngredient.name) {
+      if (imageFile) {
+        const blob = await compressImage(imageFile)
+        await saveIngredientImage(nextIngredient.name, blob)
+        if (previousName && previousName !== nextIngredient.name) {
+          await deleteIngredientImage(previousName)
+        }
+      } else if (removeLocalImage) {
+        await deleteIngredientImage(nextIngredient.name)
+      } else if (previousName && previousName !== nextIngredient.name) {
+        const existingBlob = await getIngredientImage(previousName)
+        if (existingBlob) {
+          await saveIngredientImage(nextIngredient.name, existingBlob)
+        }
         await deleteIngredientImage(previousName)
       }
-    } else if (removeLocalImage) {
-      await deleteIngredientImage(nextIngredient.name)
-      if (previousName && previousName !== nextIngredient.name) {
-        await deleteIngredientImage(previousName)
-      }
-    } else if (previousName && previousName !== nextIngredient.name) {
-      const existingBlob = await getIngredientImage(previousName)
-      if (existingBlob) {
-        await saveIngredientImage(nextIngredient.name, existingBlob)
-      }
-      await deleteIngredientImage(previousName)
-    }
 
-    replaceState({
-      ...state,
-      ingredients: nextIngredients,
-      pantry: derivePantryItems(nextIngredients, state.staples),
+      const key = previousName?.toLowerCase() ?? nextIngredient.name.toLowerCase()
+      const exists = state.ingredients.some((ingredient) => ingredient.name.toLowerCase() === key)
+      const nextIngredients = exists
+        ? state.ingredients.map((ingredient) =>
+            ingredient.name.toLowerCase() === key ? nextIngredient : ingredient,
+          )
+        : [...state.ingredients, nextIngredient]
+
+      nextIngredients.sort((a, b) => a.name.localeCompare(b.name))
+      replaceState({
+        ...state,
+        ingredients: nextIngredients,
+        pantry: derivePantryItems(nextIngredients, state.staples, []),
+      })
     })
   }
 
-  async function deleteIngredient(name: string) {
-    const nextIngredients = state.ingredients.filter((ingredient) => ingredient.name !== name)
-    persistIngredients(nextIngredients)
-    await deleteIngredientImage(name)
-    replaceState({
-      ...state,
-      ingredients: nextIngredients,
-      pantry: derivePantryItems(nextIngredients, state.staples),
+  async function deleteIngredientAction(name: string) {
+    if (!auth.user || !auth.profile) return
+
+    await runWrite('Deleted ingredient.', async () => {
+      await deleteIngredientDocument({ user: auth.user, profile: auth.profile }, getIngredientId(name))
+      await deleteIngredientImage(name)
+      const nextIngredients = state.ingredients.filter((ingredient) => ingredient.name !== name)
+      await deletePantryItem({ user: auth.user, profile: auth.profile }, getIngredientId(name))
+      replaceState({
+        ...state,
+        ingredients: nextIngredients,
+        pantry: state.pantry.filter((item) => item.id !== getIngredientId(name)),
+      })
     })
   }
 
-  function addStaple(name: string) {
+  async function addStapleAction(name: string) {
+    if (!auth.user || !auth.profile) return
     const normalized = name.trim().toLowerCase()
     if (!normalized || state.staples.includes(normalized)) return
-    const nextStaples = [...state.staples, normalized]
-    const nextIngredients = state.ingredients.filter(
-      (ingredient) => ingredient.name.toLowerCase() !== normalized,
-    )
-    commitCollections(nextRepoPreserve(), nextIngredients, nextStaples)
+
+    await runWrite('Saved staple.', async () => {
+      await upsertStaple({ user: auth.user, profile: auth.profile }, normalized)
+      const nextStaples = [...state.staples, normalized].sort((a, b) => a.localeCompare(b))
+      replaceState({
+        ...state,
+        staples: nextStaples,
+        pantry: derivePantryItems(state.ingredients, nextStaples, []),
+      })
+    })
   }
 
-  function removeStaple(name: string) {
-    const normalized = name.trim().toLowerCase()
-    const nextStaples = state.staples.filter((staple) => staple !== normalized)
-    commitCollections(nextRepoPreserve(), state.ingredients, nextStaples)
+  async function removeStapleAction(name: string) {
+    if (!auth.user || !auth.profile) return
+
+    await runWrite('Deleted staple.', async () => {
+      await deleteStaple({ user: auth.user, profile: auth.profile }, name)
+      await deletePantryItem({ user: auth.user, profile: auth.profile }, getStapleId(name))
+      const nextStaples = state.staples.filter((staple) => staple !== name)
+      replaceState({
+        ...state,
+        staples: nextStaples,
+        pantry: state.pantry.filter((item) => item.id !== getStapleId(name)),
+      })
+    })
   }
 
-  function nextRepoPreserve() {
-    return state.repo
+  async function updatePantryItemAction(item: PantryItem) {
+    if (!auth.user || !auth.profile) return
+
+    await runWrite('Saved pantry item.', async () => {
+      await upsertPantryItem(
+        { user: auth.user, profile: auth.profile },
+        {
+          ingredientId: item.id,
+          kind: item.kind,
+          name: item.name,
+          quantity: item.quantity ?? '',
+          unit: item.unit ?? '',
+          status: item.status ?? 'unknown',
+        },
+      )
+
+      const nextPantry = state.pantry.map((entry) => (entry.id === item.id ? item : entry))
+      replaceState({ ...state, pantry: nextPantry })
+    })
   }
 
-  function setPlan(nextPlan: WeeklyPlan) {
-    persistPlan(nextPlan)
-    replaceState({ ...state, plan: nextPlan })
+  async function setPlanAction(nextPlan: WeeklyPlan) {
+    await savePlan(nextPlan)
   }
 
-  function updateSlotValue(
+  async function updateSlotValue(
     day: DayKey,
     meal: 'breakfast' | 'lunch' | 'dinner',
     field: string,
     value: string | string[],
   ) {
     const nextPlan = updateMealSlot(state.plan, day, meal, field, value)
-    setPlan(nextPlan)
+    await setPlanAction(nextPlan)
   }
 
-  function clearSlot(day: DayKey, meal: 'breakfast' | 'lunch' | 'dinner', field: string) {
+  async function clearSlotAction(day: DayKey, meal: 'breakfast' | 'lunch' | 'dinner', field: string) {
     const value = field === 'sabjis' ? [] : ''
-    updateSlotValue(day, meal, field, value)
+    await updateSlotValue(day, meal, field, value)
   }
 
-  function copyDay(fromDay: DayKey, toDay: DayKey) {
-    setPlan(copyDayPlan(state.plan, fromDay, toDay))
+  async function copyDayAction(fromDay: DayKey, toDay: DayKey) {
+    await setPlanAction(copyDayPlan(state.plan, fromDay, toDay))
   }
 
-  function clearDay(day: DayKey) {
+  async function clearDayAction(day: DayKey) {
     const nextPlan = structuredClone(state.plan)
     nextPlan.days[day] = {
       breakfast: { sabjis: [] },
       lunch: { curry: '', sabji: '', gujaratiSabji: '' },
       dinner: { curry: '', sabjis: [], gujaratiSabji: '' },
     }
-    setPlan(nextPlan)
+    await setPlanAction(nextPlan)
   }
 
   function setIntegrations(integrations: Integrations) {
@@ -274,66 +627,256 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
       ...state,
       integrations,
       settings: { ...state.settings, integrations },
+    }, { persist: false })
+  }
+
+  async function importPayloadToFirestore(
+    repo: Dish[],
+    ingredients: Ingredient[],
+    staples: Staple[],
+    plan?: WeeklyPlan | null,
+  ) {
+    if (!auth.user || !auth.profile) {
+      throw new Error('Signed-in profile required.')
+    }
+
+    const existingDishIds = new Set(state.repo.map((dish) => dish.id))
+    const existingIngredientIds = new Set(state.ingredients.map((ingredient) => getIngredientId(ingredient.name)))
+    const existingStapleIds = new Set(state.staples.map((staple) => getStapleId(staple)))
+
+    let dishAdd = 0
+    let dishUpd = 0
+    let ingAdd = 0
+    let ingUpd = 0
+    let stapleAdd = 0
+    let stapleUpd = 0
+
+    await runWrite('Imported data to Firestore.', async () => {
+      for (const dish of repo) {
+        const exists = existingDishIds.has(dish.id)
+        await (exists
+          ? updateDish(
+              { user: auth.user, profile: auth.profile },
+              dish.id,
+              {
+                name: dish.name,
+                category: dish.category,
+                mainIngredients: dish.mainIngredients,
+                emoji: dish.emoji,
+                recipe: dish.recipe,
+                youtubeUrl: dish.youtube,
+                referenceText: dish.referenceText,
+                imageUrl: dish.image,
+              },
+            )
+          : createDish(
+              { user: auth.user, profile: auth.profile },
+              {
+                id: dish.id,
+                name: dish.name,
+                category: dish.category,
+                mainIngredients: dish.mainIngredients,
+                emoji: dish.emoji,
+                recipe: dish.recipe,
+                youtubeUrl: dish.youtube,
+                referenceText: dish.referenceText,
+                imageUrl: dish.image,
+              },
+            ))
+        if (exists) dishUpd += 1
+        else dishAdd += 1
+      }
+
+      for (const ingredient of ingredients) {
+        const ingredientId = getIngredientId(ingredient.name)
+        const exists = existingIngredientIds.has(ingredientId)
+        await (exists
+          ? updateIngredient(
+              { user: auth.user, profile: auth.profile },
+              ingredientId,
+              {
+                name: ingredient.name,
+                emoji: ingredient.emoji,
+                malayalamName: ingredient.malayalam,
+                gujaratiName: ingredient.gujarati,
+                imageUrl: ingredient.image,
+              },
+            )
+          : createIngredient(
+              { user: auth.user, profile: auth.profile },
+              {
+                id: ingredientId,
+                name: ingredient.name,
+                emoji: ingredient.emoji,
+                malayalamName: ingredient.malayalam,
+                gujaratiName: ingredient.gujarati,
+                imageUrl: ingredient.image,
+              },
+            ))
+        await upsertPantryItem(
+          { user: auth.user, profile: auth.profile },
+          {
+            ingredientId,
+            kind: 'ingredient',
+            name: ingredient.name,
+            quantity: '',
+            unit: '',
+            status: 'unknown',
+          },
+        )
+        if (exists) ingUpd += 1
+        else ingAdd += 1
+      }
+
+      for (const staple of staples) {
+        const stapleId = getStapleId(staple)
+        const exists = existingStapleIds.has(stapleId)
+        await upsertStaple({ user: auth.user, profile: auth.profile }, staple)
+        await upsertPantryItem(
+          { user: auth.user, profile: auth.profile },
+          {
+            ingredientId: stapleId,
+            kind: 'staple',
+            name: staple,
+            quantity: '',
+            unit: '',
+            status: 'available',
+          },
+        )
+        if (exists) stapleUpd += 1
+        else stapleAdd += 1
+      }
+
+      if (plan) {
+        await saveWeeklyPlan({ user: auth.user, profile: auth.profile }, plan)
+      }
+
+      await refreshData()
     })
+
+    return { dishAdd, dishUpd, ingAdd, ingUpd, stapleAdd, stapleUpd }
   }
 
-  function importJson(text: string) {
+  async function importJson(text: string) {
     const payload = parseImportPayload(text)
-    const { nextState, stats } = applyImportPayload(state, payload)
-    persistRepo(nextState.repo)
-    persistIngredients(nextState.ingredients)
-    persistStaples(nextState.staples)
-    replaceState(nextState)
-
-    return stats
+    return importPayloadToFirestore(payload.sabjis, payload.ingredients, payload.staples)
   }
 
-  function runFridgePlan(available: string[], includeGujarati: boolean) {
+  async function runFridgePlan(available: string[], includeGujarati: boolean) {
     const result = generatePlanFromFridge(state.repo, state.plan, available, state.staples, includeGujarati)
-    setPlan(result.plan)
+    await setPlanAction(result.plan)
     return {
       filledCount: result.filledCount,
       makeableCount: result.makeableCount,
     }
   }
 
-  const value = useMemo<LocalKitchenContextValue>(
-    () => ({
-      state,
-      exportJson: JSON.stringify(buildExportPayload(state), null, 2),
-      setPlan,
-      setIntegrations,
-      saveDish,
-      deleteDish,
-      saveIngredient,
-      deleteIngredient,
-      addStaple,
-      removeStaple,
-      updateSlot: updateSlotValue,
-      clearSlot,
-      copyDay,
-      clearDay,
-      importJson,
-      runFridgePlan,
-      suggestFromIngredients(available) {
-        return suggestDishesFromIngredients(state.repo, available, state.staples)
-      },
-      getDishById(id) {
-        return getDishById(state.repo, id)
-      },
-      getOverlappingDishes(dishId) {
-        return getOverlappingDishes(state.repo, dishId, state.staples)
-      },
-      getIngredientsNeeded(scope) {
-        return computeIngredientsNeeded(state.repo, state.plan, state.staples, scope)
-      },
-    }),
-    [state],
-  )
+  async function getMigrationPreview(): Promise<MigrationPreview> {
+    const hasLegacyData = Boolean(
+      readRawStorageValue('moms_sabji_repo')
+      || readRawStorageValue('moms_ingredients')
+      || readRawStorageValue('moms_staples')
+      || readRawStorageValue('moms_weekly_plan'),
+    )
+    const legacyState = loadKitchenState()
+    const [dishImages, ingredientImages] = await Promise.all([
+      listDishImagesAsDataUrls(),
+      listIngredientImagesAsDataUrls(),
+    ])
+
+    return {
+      hasLegacyData,
+      hasLocalImages: Object.keys(dishImages).length > 0 || Object.keys(ingredientImages).length > 0,
+      dishes: hasLegacyData ? legacyState.repo : [],
+      ingredients: hasLegacyData ? legacyState.ingredients : [],
+      staples: hasLegacyData ? legacyState.staples : [],
+      plan: hasLegacyData ? legacyState.plan : null,
+    }
+  }
+
+  async function runLegacyMigration(): Promise<MigrationSummary> {
+    const preview = await getMigrationPreview()
+    if (!preview.hasLegacyData) {
+      return {
+        created: 0,
+        updated: 0,
+        skipped: 1,
+        failed: 0,
+        failures: ['No legacy localStorage data was found on this device.'],
+      }
+    }
+
+    try {
+      const stats = await importPayloadToFirestore(
+        preview.dishes,
+        preview.ingredients,
+        preview.staples,
+        preview.plan,
+      )
+
+      return {
+        created: stats.dishAdd + stats.ingAdd + stats.stapleAdd,
+        updated: stats.dishUpd + stats.ingUpd + stats.stapleUpd,
+        skipped: 0,
+        failed: 0,
+        failures: [],
+      }
+    } catch (caught) {
+      return {
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 1,
+        failures: [caught instanceof Error ? caught.message : 'Migration failed.'],
+      }
+    }
+  }
+
+  const value: LocalKitchenContextValue = {
+    state,
+    exportJson: JSON.stringify(buildExportPayload(state), null, 2),
+    loading,
+    error,
+    syncState,
+    syncMessage,
+    canEditData,
+    canImportExport,
+    refreshData,
+    setPlan: setPlanAction,
+    setIntegrations,
+    saveDish: saveDishAction,
+    deleteDish: deleteDishAction,
+    saveIngredient: saveIngredientAction,
+    deleteIngredient: deleteIngredientAction,
+    addStaple: addStapleAction,
+    removeStaple: removeStapleAction,
+    updatePantryItem: updatePantryItemAction,
+    updateSlot: updateSlotValue,
+    clearSlot: clearSlotAction,
+    copyDay: copyDayAction,
+    clearDay: clearDayAction,
+    importJson,
+    runFridgePlan,
+    suggestFromIngredients(available) {
+      return suggestDishesFromIngredients(state.repo, available, state.staples)
+    },
+    getDishById(id) {
+      return getDishById(state.repo, id)
+    },
+    getOverlappingDishes(dishId) {
+      return getOverlappingDishes(state.repo, dishId, state.staples)
+    },
+    getIngredientsNeeded(scope) {
+      return computeIngredientsNeeded(state.repo, state.plan, state.staples, scope)
+    },
+    getMigrationPreview,
+    runLegacyMigration,
+  }
 
   return <LocalKitchenContext.Provider value={value}>{children}</LocalKitchenContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLocalKitchen() {
   const context = useContext(LocalKitchenContext)
   if (!context) {

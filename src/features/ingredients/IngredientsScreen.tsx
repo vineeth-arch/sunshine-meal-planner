@@ -2,10 +2,9 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { canEdit } from '../auth/access'
-import { useAuth } from '../auth/use-auth'
 import type { Ingredient } from '../../types/domain'
 
 type DraftIngredient = Ingredient & { previousName?: string; removeLocalImage?: boolean }
@@ -21,12 +20,22 @@ function emptyIngredient(): DraftIngredient {
 }
 
 export function IngredientsScreen() {
-  const { state, saveIngredient, deleteIngredient, addStaple, removeStaple } = useLocalKitchen()
-  const { profile } = useAuth()
+  const {
+    state,
+    saveIngredient,
+    deleteIngredient,
+    addStaple,
+    removeStaple,
+    loading,
+    error,
+    refreshData,
+    syncMessage,
+    canEditData,
+  } = useLocalKitchen()
   const [draft, setDraft] = useState<DraftIngredient | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [newStaple, setNewStaple] = useState('')
-  const allowEdit = canEdit(profile)
+  const allowEdit = canEditData
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -41,8 +50,23 @@ export function IngredientsScreen() {
       <ScreenHeader
         eyebrow="Ingredients"
         title="Ingredient reference"
-        description="Manage ingredient translations, local images, and staple exclusions while keeping the legacy storage model intact."
+        description="Manage shared ingredient references, staple exclusions, and local-only images while Firestore stores the household data."
       />
+
+      {syncMessage ? (
+        <PanelCard>
+          <p className="mk-meta">{syncMessage}</p>
+        </PanelCard>
+      ) : null}
+
+      {error ? (
+        <PanelCard className="mk-stack-sm">
+          <EmptyState title="Could not load ingredients" description={error} />
+          <button type="button" className="mk-button mk-button-secondary mk-button-pad-sm" onClick={() => void refreshData()}>
+            Retry
+          </button>
+        </PanelCard>
+      ) : null}
 
       <PanelCard className="mk-stack-sm">
         <div className="mk-inline-actions">
@@ -61,7 +85,7 @@ export function IngredientsScreen() {
               <span key={staple} className="mk-chip mk-chip-soft">
                 {staple}
                 {allowEdit ? (
-                  <button type="button" className="mk-inline-link" onClick={() => removeStaple(staple)}>
+                  <button type="button" className="mk-inline-link" onClick={() => void removeStaple(staple)}>
                     remove
                   </button>
                 ) : null}
@@ -75,7 +99,7 @@ export function IngredientsScreen() {
                 type="button"
                 className="mk-button mk-button-secondary mk-button-pad-sm"
                 onClick={() => {
-                  addStaple(newStaple)
+                  void addStaple(newStaple)
                   setNewStaple('')
                 }}
               >
@@ -86,47 +110,60 @@ export function IngredientsScreen() {
         </div>
       </PanelCard>
 
-      <div className="mk-card-grid">
-        {state.ingredients.map((ingredient) => (
-          <PanelCard key={ingredient.name} className="mk-stack-sm">
-            <div className="mk-entity-row">
-              <LocalImageThumb
-                kind="ingredient"
-                id={ingredient.name}
-                hostedUrl={ingredient.image}
-                emoji={ingredient.emoji}
-                alt={ingredient.name}
-                className="mk-thumb"
-              />
-              <div className="mk-stack-xs">
-                <h3 className="mk-subtitle">{ingredient.name}</h3>
-                <p className="mk-meta">{[ingredient.malayalam, ingredient.gujarati].filter(Boolean).join(' · ') || 'No translations yet'}</p>
+      {loading ? (
+        <PanelCard>
+          <p className="mk-meta">Loading ingredients from Firestore...</p>
+        </PanelCard>
+      ) : state.ingredients.length === 0 ? (
+        <PanelCard>
+          <EmptyState
+            title="No ingredients yet"
+            description={allowEdit ? 'Add ingredients or import legacy data to populate the pantry reference.' : 'This household has no ingredients yet.'}
+          />
+        </PanelCard>
+      ) : (
+        <div className="mk-card-grid">
+          {state.ingredients.map((ingredient) => (
+            <PanelCard key={ingredient.name} className="mk-stack-sm">
+              <div className="mk-entity-row">
+                <LocalImageThumb
+                  kind="ingredient"
+                  id={ingredient.name}
+                  hostedUrl={ingredient.image}
+                  emoji={ingredient.emoji}
+                  alt={ingredient.name}
+                  className="mk-thumb"
+                />
+                <div className="mk-stack-xs">
+                  <h3 className="mk-subtitle">{ingredient.name}</h3>
+                  <p className="mk-meta">{[ingredient.malayalam, ingredient.gujarati].filter(Boolean).join(' · ') || 'No translations yet'}</p>
+                </div>
               </div>
-            </div>
-            {allowEdit ? (
-              <div className="mk-inline-actions">
-                <button
-                  type="button"
-                  className="mk-button mk-button-primary mk-button-pad-sm"
-                  onClick={() => setDraft({ ...ingredient, previousName: ingredient.name })}
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="mk-button mk-button-danger mk-button-pad-sm"
-                  onClick={async () => {
-                    if (!window.confirm(`Delete ${ingredient.name}?`)) return
-                    await deleteIngredient(ingredient.name)
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            ) : null}
-          </PanelCard>
-        ))}
-      </div>
+              {allowEdit ? (
+                <div className="mk-inline-actions">
+                  <button
+                    type="button"
+                    className="mk-button mk-button-primary mk-button-pad-sm"
+                    onClick={() => setDraft({ ...ingredient, previousName: ingredient.name })}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="mk-button mk-button-danger mk-button-pad-sm"
+                    onClick={() => {
+                      if (!window.confirm(`Delete ${ingredient.name}?`)) return
+                      void deleteIngredient(ingredient.name)
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ) : null}
+            </PanelCard>
+          ))}
+        </div>
+      )}
 
       {draft ? (
         <div className="mk-modal-backdrop" role="presentation">

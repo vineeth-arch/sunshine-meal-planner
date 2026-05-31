@@ -2,10 +2,9 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { canEdit } from '../auth/access'
-import { useAuth } from '../auth/use-auth'
 import type { Dish, DishCategory } from '../../types/domain'
 
 const CATEGORY_COLORS: Record<DishCategory, string> = {
@@ -32,12 +31,11 @@ function emptyDish(): DraftDish {
 }
 
 export function DishesScreen() {
-  const { state, saveDish, deleteDish } = useLocalKitchen()
-  const { profile } = useAuth()
+  const { state, saveDish, deleteDish, loading, error, refreshData, syncMessage, canEditData } = useLocalKitchen()
   const [filter, setFilter] = useState<'all' | DishCategory>('all')
   const [draft, setDraft] = useState<DraftDish | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const allowEdit = canEdit(profile)
+  const allowEdit = canEditData
 
   const dishes = state.repo.filter((dish) => filter === 'all' || dish.category === filter)
 
@@ -64,8 +62,23 @@ export function DishesScreen() {
       <ScreenHeader
         eyebrow="Dishes"
         title="Cookbook management"
-        description="Sabjis, curries, and Gujarati dishes now live in dedicated React forms backed by legacy local storage."
+        description="Sabjis, curries, and Gujarati dishes now load from household Firestore data after login."
       />
+
+      {syncMessage ? (
+        <PanelCard>
+          <p className="mk-meta">{syncMessage}</p>
+        </PanelCard>
+      ) : null}
+
+      {error ? (
+        <PanelCard className="mk-stack-sm">
+          <EmptyState title="Could not load dishes" description={error} />
+          <button type="button" className="mk-button mk-button-secondary mk-button-pad-sm" onClick={() => void refreshData()}>
+            Retry
+          </button>
+        </PanelCard>
+      ) : null}
 
       <PanelCard className="mk-stack-sm">
         <div className="mk-inline-actions">
@@ -89,45 +102,58 @@ export function DishesScreen() {
         </div>
       </PanelCard>
 
-      <div className="mk-card-grid">
-        {dishes.map((dish) => (
-          <PanelCard key={dish.id} className="mk-stack-sm">
-            <div className="mk-entity-row">
-              <LocalImageThumb
-                kind="dish"
-                id={dish.id}
-                hostedUrl={dish.image}
-                emoji={dish.emoji}
-                alt={dish.name}
-                className="mk-thumb"
-              />
-              <div className="mk-stack-xs">
-                <p className="mk-eyebrow">{dish.category}</p>
-                <h3 className="mk-subtitle">{dish.name}</h3>
-                <p className="mk-meta">{dish.mainIngredients.join(', ')}</p>
+      {loading ? (
+        <PanelCard>
+          <p className="mk-meta">Loading dishes from Firestore...</p>
+        </PanelCard>
+      ) : dishes.length === 0 ? (
+        <PanelCard>
+          <EmptyState
+            title="No dishes yet"
+            description={allowEdit ? 'Add the first dish to seed this household cookbook.' : 'This household has no dishes yet.'}
+          />
+        </PanelCard>
+      ) : (
+        <div className="mk-card-grid">
+          {dishes.map((dish) => (
+            <PanelCard key={dish.id} className="mk-stack-sm">
+              <div className="mk-entity-row">
+                <LocalImageThumb
+                  kind="dish"
+                  id={dish.id}
+                  hostedUrl={dish.image}
+                  emoji={dish.emoji}
+                  alt={dish.name}
+                  className="mk-thumb"
+                />
+                <div className="mk-stack-xs">
+                  <p className="mk-eyebrow">{dish.category}</p>
+                  <h3 className="mk-subtitle">{dish.name}</h3>
+                  <p className="mk-meta">{dish.mainIngredients.join(', ') || 'No ingredients listed'}</p>
+                </div>
               </div>
-            </div>
-            {dish.referenceText ? <p className="mk-copy">{dish.referenceText}</p> : null}
-            {allowEdit ? (
-              <div className="mk-inline-actions">
-                <button type="button" className="mk-button mk-button-primary mk-button-pad-sm" onClick={() => setDraft({ ...dish })}>
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="mk-button mk-button-danger mk-button-pad-sm"
-                  onClick={async () => {
-                    if (!window.confirm(`Delete ${dish.name}?`)) return
-                    await deleteDish(dish.id)
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            ) : null}
-          </PanelCard>
-        ))}
-      </div>
+              {dish.referenceText ? <p className="mk-copy">{dish.referenceText}</p> : null}
+              {allowEdit ? (
+                <div className="mk-inline-actions">
+                  <button type="button" className="mk-button mk-button-primary mk-button-pad-sm" onClick={() => setDraft({ ...dish })}>
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="mk-button mk-button-danger mk-button-pad-sm"
+                    onClick={() => {
+                      if (!window.confirm(`Delete ${dish.name}?`)) return
+                      void deleteDish(dish.id)
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ) : null}
+            </PanelCard>
+          ))}
+        </div>
+      )}
 
       {draft ? (
         <div className="mk-modal-backdrop" role="presentation">

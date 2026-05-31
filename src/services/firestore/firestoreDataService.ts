@@ -30,6 +30,7 @@ export interface FirestoreServiceContext {
 type HouseholdCollections = {
   dishes: CollectionReference<DocumentData>
   ingredients: CollectionReference<DocumentData>
+  staples: CollectionReference<DocumentData>
   pantryItems: CollectionReference<DocumentData>
   weeklyPlans: CollectionReference<DocumentData>
   settings: CollectionReference<DocumentData>
@@ -84,6 +85,7 @@ export function requireHouseholdAccess(
     collections: {
       dishes: collection(householdRef, 'dishes'),
       ingredients: collection(householdRef, 'ingredients'),
+      staples: collection(householdRef, 'staples'),
       pantryItems: collection(householdRef, 'pantryItems'),
       weeklyPlans: collection(householdRef, 'weeklyPlans'),
       settings: collection(householdRef, 'settings'),
