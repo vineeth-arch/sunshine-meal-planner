@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type PropsWithChildren } from 'react'
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
 
-import { getFirebaseServices, hasFirebaseConfig } from '../../lib/firebase/client'
+import { getFirebaseServices, hasFirebaseConfig } from '../../lib/firebase'
 import { ensureUserProfile } from '../../services/firestore/household'
 import type { UserProfile } from '../../types/domain'
 import { AuthContext, type AuthContextValue } from './auth-context-value'

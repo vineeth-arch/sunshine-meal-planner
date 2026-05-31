@@ -9,7 +9,7 @@ import {
 import type { User } from 'firebase/auth'
 
 import type { LocalKitchenState, UserProfile } from '../../types/domain'
-import { getFirebaseServices } from '../../lib/firebase/client'
+import { getFirebaseServices } from '../../lib/firebase'
 
 export async function ensureUserProfile(user: User): Promise<UserProfile | null> {
   const services = getFirebaseServices()
