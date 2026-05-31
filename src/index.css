@@ -82,6 +82,9 @@ a {
 }
 
 .mk-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   padding: 1.25rem;
   padding-bottom: 6.5rem;
 }
@@ -385,6 +388,50 @@ a {
   padding: 1.25rem 0.25rem;
 }
 
+.mk-status-viewport {
+  position: fixed;
+  inset: 1rem 1rem auto;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.mk-status-viewport > * {
+  pointer-events: auto;
+}
+
+.mk-status-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: min(100%, 430px);
+  padding: 1rem;
+  border: 2px solid var(--green);
+  border-radius: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mk-status-banner-warning {
+  background: color-mix(in srgb, var(--yellow) 55%, white);
+}
+
+.mk-status-banner-neutral {
+  background: rgb(255 255 255 / 0.92);
+}
+
+.mk-status-title,
+.mk-status-copy {
+  margin: 0;
+}
+
+.mk-status-title {
+  font-weight: 800;
+}
+
+.mk-status-copy {
+  color: var(--green-muted);
+  line-height: 1.5;
+}
+
 .mk-chip {
   display: inline-flex;
   align-items: center;
@@ -609,6 +656,17 @@ a {
   .mk-main-content {
     padding: 1.5rem;
     padding-bottom: 7rem;
+  }
+
+  .mk-status-viewport {
+    inset: 1.5rem auto auto 50%;
+    transform: translateX(-50%);
+  }
+
+  .mk-status-banner {
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
   }
 
   .mk-stat-grid,

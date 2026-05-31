@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
 
+import { getFriendlyFirebaseDataErrorMessage } from '../../lib/firebase/error-messages'
 import { getFirebaseConfigError, getFirebaseServices, hasFirebaseConfig } from '../../lib/firebase'
 import { getUserProfile } from '../../services/firestore/firestoreProfileService'
 import type { UserProfile } from '../../types/domain'
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setProfileState('ready')
     } catch (caught) {
       setProfile(null)
-      setError(caught instanceof Error ? caught.message : 'Could not load profile.')
+      setError(getFriendlyFirebaseDataErrorMessage('Could not load profile', caught))
       setProfileState('error')
     }
   }, [configError, enabled])

@@ -12,6 +12,7 @@ import {
 
 import { getFirebaseApp } from '../../lib/firebase'
 import { canEdit } from '../../features/auth/access'
+import { getFriendlyFirebaseDataErrorMessage } from '../../lib/firebase/error-messages'
 import type {
   DayKey,
   DishCategory,
@@ -149,11 +150,7 @@ export function sortMealSlots(slots: MealSlotDocument[]): MealSlotDocument[] {
 
 export function withServiceError<T>(action: string, operation: () => Promise<T>): Promise<T> {
   return operation().catch((caught: unknown) => {
-    if (caught instanceof Error) {
-      throw new Error(`${action}: ${caught.message}`)
-    }
-
-    throw new Error(`${action}: Unknown error.`)
+    throw new Error(getFriendlyFirebaseDataErrorMessage(action, caught))
   })
 }
 
