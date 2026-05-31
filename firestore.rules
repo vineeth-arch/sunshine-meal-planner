@@ -6,71 +6,117 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function userDoc() {
+    // The signed-in user's Firestore profile is the only trusted source for
+    // household membership and role checks.
+    function userProfile() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    function hasProfile() {
+    function hasUserProfile() {
       return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    function ownUser(userId) {
-      return signedIn() && request.auth.uid == userId;
+    function userHouseholdId() {
+      return hasUserProfile() ? userProfile().data.householdId : null;
     }
 
-    function targetUserDoc(userId) {
-      return get(/databases/$(database)/documents/users/$(userId));
+    function userRole() {
+      return hasUserProfile() ? userProfile().data.role : null;
+    }
+
+    function isAdmin() {
+      return userRole() == 'admin';
+    }
+
+    function isEditor() {
+      return userRole() == 'editor';
+    }
+
+    function isViewer() {
+      return userRole() == 'viewer';
+    }
+
+    // Rules enforce household boundaries directly so client UI cannot bypass
+    // access checks by pointing at another household's document path.
+    function belongsToHousehold(householdId) {
+      return hasUserProfile() && userHouseholdId() == householdId;
+    }
+
+    function canReadHousehold(householdId) {
+      return belongsToHousehold(householdId) && (isAdmin() || isEditor() || isViewer());
+    }
+
+    function canWriteHouseholdData(householdId) {
+      return belongsToHousehold(householdId) && (isAdmin() || isEditor());
     }
 
     function isValidRole(role) {
       return role in ['admin', 'editor', 'viewer'];
     }
 
-    function householdRole(householdId) {
-      return hasProfile() && userDoc().data.householdId == householdId
-        ? userDoc().data.role
-        : null;
-    }
-
-    function inHousehold(householdId) {
-      return signedIn() && householdRole(householdId) != null;
-    }
-
-    function isAdmin(householdId) {
-      return householdRole(householdId) == 'admin';
-    }
-
-    function canEdit(householdId) {
-      return householdRole(householdId) in ['admin', 'editor'];
+    function targetUserProfile(userId) {
+      return get(/databases/$(database)/documents/users/$(userId));
     }
 
     match /users/{userId} {
-      allow read: if ownUser(userId)
-        || (hasProfile()
-          && userDoc().data.role == 'admin'
-          && targetUserDoc(userId).data.householdId == userDoc().data.householdId);
-      allow create: if hasProfile()
-        && userDoc().data.role == 'admin'
-        && request.resource.data.householdId == userDoc().data.householdId
+      // Users can read their own profile; admins can manage profiles inside
+      // their own household only.
+      allow read: if signedIn() && request.auth.uid == userId
+        || (isAdmin()
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && targetUserProfile(userId).data.householdId == userHouseholdId());
+      allow create: if isAdmin()
+        && request.resource.data.householdId == userHouseholdId()
         && isValidRole(request.resource.data.role);
-      allow update: if hasProfile()
-        && userDoc().data.role == 'admin'
-        && resource.data.householdId == userDoc().data.householdId
+      allow update: if isAdmin()
+        && resource.data.householdId == userHouseholdId()
         && request.resource.data.householdId == resource.data.householdId
         && isValidRole(request.resource.data.role);
-      allow delete: if hasProfile()
-        && userDoc().data.role == 'admin'
-        && resource.data.householdId == userDoc().data.householdId;
+      allow delete: if isAdmin()
+        && resource.data.householdId == userHouseholdId();
     }
 
     match /households/{householdId} {
-      allow read: if inHousehold(householdId);
-      allow create, update, delete: if isAdmin(householdId);
+      allow read: if canReadHousehold(householdId);
+      allow create, update, delete: if belongsToHousehold(householdId) && isAdmin();
     }
 
-    match /households/{householdId}/{document=**} {
-      allow read: if inHousehold(householdId);
-      allow write: if canEdit(householdId);
+    match /households/{householdId}/dishes/{dishId} {
+      allow read: if canReadHousehold(householdId);
+      allow write: if canWriteHouseholdData(householdId);
+    }
+
+    match /households/{householdId}/ingredients/{ingredientId} {
+      allow read: if canReadHousehold(householdId);
+      allow write: if canWriteHouseholdData(householdId);
+    }
+
+    match /households/{householdId}/pantryItems/{itemId} {
+      allow read: if canReadHousehold(householdId);
+      allow write: if canWriteHouseholdData(householdId);
+    }
+
+    match /households/{householdId}/weeklyPlans/{planId} {
+      allow read: if canReadHousehold(householdId);
+      allow write: if canWriteHouseholdData(householdId);
+    }
+
+    // mealSlots are nested under weeklyPlans, so they need their own match.
+    match /households/{householdId}/weeklyPlans/{planId}/mealSlots/{slotId} {
+      allow read: if canReadHousehold(householdId);
+      allow write: if canWriteHouseholdData(householdId);
+    }
+
+    // Household settings are readable across the household, but only admins
+    // can change them.
+    match /households/{householdId}/settings/{settingId} {
+      allow read: if canReadHousehold(householdId);
+      allow write: if belongsToHousehold(householdId) && isAdmin();
+    }
+
+    // Deny everything else by default, including unexpected collection paths.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
