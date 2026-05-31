@@ -1,11 +1,9 @@
-import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import App from '../App'
 import { AdminScreen } from '../features/admin/AdminScreen'
-import { AuthLoadingScreen } from '../features/auth/AuthLoadingScreen'
+import { PublicOnlyRoute, RequireAuth } from '../features/auth/AuthRouteGuards'
 import { LoginScreen } from '../features/auth/LoginScreen'
-import { useAuth } from '../features/auth/use-auth'
 import { DishesScreen } from '../features/dishes/DishesScreen'
 import { IngredientsScreen } from '../features/ingredients/IngredientsScreen'
 import { DashboardScreen } from '../features/meal-planner/DashboardScreen'
@@ -15,24 +13,6 @@ import { WeekPlannerScreen } from '../features/meal-planner/WeekPlannerScreen'
 import { PantryScreen } from '../features/pantry/PantryScreen'
 import { SettingsScreen } from '../features/settings/SettingsScreen'
 import { NotFound } from './NotFound'
-
-function RequireAuth({ children }: { children: ReactElement }) {
-  const { loading, user } = useAuth()
-
-  if (loading) return <AuthLoadingScreen />
-  if (!user) return <Navigate to="/login" replace />
-
-  return children
-}
-
-function PublicOnlyRoute({ children }: { children: ReactElement }) {
-  const { loading, user } = useAuth()
-
-  if (loading) return <AuthLoadingScreen />
-  if (user) return <Navigate to="/dashboard" replace />
-
-  return children
-}
 
 export const router = createBrowserRouter([
   {
