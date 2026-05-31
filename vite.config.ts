@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -99,5 +101,15 @@ export default defineConfig({
         },
       },
     },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: false,
+    setupFiles: './src/test/setup.ts',
+    css: true,
+    restoreMocks: true,
+    clearMocks: true,
+    include: ['src/**/*.test.{ts,tsx}'],
+    exclude: ['tests/e2e/**'],
   },
 })

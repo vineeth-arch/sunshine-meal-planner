@@ -6,17 +6,43 @@ import { getFirebaseConfigError, getFirebaseServices, hasFirebaseConfig } from '
 import { getUserProfile } from '../../services/firestore/firestoreProfileService'
 import type { UserProfile } from '../../types/domain'
 import { AuthContext, type AuthContextValue } from './auth-context-value'
+import {
+  buildMockAuthSnapshot,
+  isMockAuthEnabled,
+  persistMockAuthState,
+  readMockAuthState,
+  resolveMockStateForEmail,
+  TEST_AUTH_STORAGE_KEY,
+} from './test-auth'
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const enabled = hasFirebaseConfig()
-  const configError = getFirebaseConfigError()
-  const [loading, setLoading] = useState(enabled)
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [error, setError] = useState<string | null>(configError)
-  const [profileState, setProfileState] = useState<AuthContextValue['profileState']>(enabled ? 'loading' : 'idle')
+  const mockAuthEnabled = isMockAuthEnabled()
+  const initialMockSnapshot = mockAuthEnabled ? buildMockAuthSnapshot(readMockAuthState()) : null
+  const enabled = mockAuthEnabled || hasFirebaseConfig()
+  const configError = mockAuthEnabled ? null : getFirebaseConfigError()
+  const [loading, setLoading] = useState(initialMockSnapshot?.loading ?? enabled)
+  const [user, setUser] = useState<User | null>(initialMockSnapshot?.user ?? null)
+  const [profile, setProfile] = useState<UserProfile | null>(initialMockSnapshot?.profile ?? null)
+  const [error, setError] = useState<string | null>(initialMockSnapshot?.error ?? configError)
+  const [profileState, setProfileState] = useState<AuthContextValue['profileState']>(
+    initialMockSnapshot?.profileState ?? (enabled ? 'loading' : 'idle'),
+  )
+
+  const applyMockSnapshot = useCallback(() => {
+    const snapshot = buildMockAuthSnapshot(readMockAuthState())
+    setLoading(snapshot.loading)
+    setUser(snapshot.user)
+    setProfile(snapshot.profile)
+    setError(snapshot.error)
+    setProfileState(snapshot.profileState)
+  }, [])
 
   const refreshProfileForUser = useCallback(async (nextUser: User | null) => {
+    if (mockAuthEnabled) {
+      applyMockSnapshot()
+      return
+    }
+
     if (!nextUser) {
       setProfile(null)
       setError(configError)
@@ -43,9 +69,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setError(getFriendlyFirebaseDataErrorMessage('Could not load profile', caught))
       setProfileState('error')
     }
-  }, [configError, enabled])
+  }, [applyMockSnapshot, configError, enabled, mockAuthEnabled])
 
   useEffect(() => {
+    if (mockAuthEnabled) {
+      const handleStorage = (event: StorageEvent) => {
+        if (event.key === null || event.key === TEST_AUTH_STORAGE_KEY) {
+          applyMockSnapshot()
+        }
+      }
+
+      window.addEventListener('storage', handleStorage)
+      return () => window.removeEventListener('storage', handleStorage)
+    }
+
     const services = getFirebaseServices()
     if (!services) return
 
@@ -54,7 +91,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await refreshProfileForUser(nextUser)
       setLoading(false)
     })
-  }, [refreshProfileForUser])
+  }, [applyMockSnapshot, mockAuthEnabled, refreshProfileForUser])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -65,11 +102,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
       error,
       profileState,
       async signIn(email, password) {
+        if (mockAuthEnabled) {
+          void password
+          persistMockAuthState(resolveMockStateForEmail(email))
+          applyMockSnapshot()
+          return
+        }
+
         const services = getFirebaseServices()
         if (!services) throw new Error('Firebase is not configured.')
         await signInWithEmailAndPassword(services.auth, email, password)
       },
       async signOutUser() {
+        if (mockAuthEnabled) {
+          persistMockAuthState('logged-out')
+          applyMockSnapshot()
+          return
+        }
+
         const services = getFirebaseServices()
         if (!services) return
         await signOut(services.auth)
@@ -78,7 +128,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         await refreshProfileForUser(user)
       },
     }),
-    [enabled, loading, user, profile, error, profileState, refreshProfileForUser],
+    [applyMockSnapshot, enabled, error, loading, mockAuthEnabled, profile, profileState, refreshProfileForUser, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

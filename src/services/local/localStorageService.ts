@@ -228,7 +228,7 @@ export function loadLocalKitchenState(): LocalKitchenState {
     ? ingredientsResult.value.map((ingredient) => normalizeIngredient(ingredient)).filter(isDefined)
     : null
   let plan = normalizePlan(planResult.value)
-  const lastWeekPlan = normalizePlan(lastWeekResult.value)
+  let lastWeekPlan = normalizePlan(lastWeekResult.value)
   const integrations = normalizeIntegrations(integrationsResult.value ?? DEFAULT_INTEGRATIONS)
 
   const nextRepo = repo && repo.length > 0 ? repo : DEFAULT_DISHES
@@ -251,6 +251,7 @@ export function loadLocalKitchenState(): LocalKitchenState {
   const currentWeekStart = getWeekStartDate()
   if (plan.weekStartingDate !== currentWeekStart) {
     if (!planResult.corrupted) writeJson(STORAGE_KEY_LAST_WEEK, plan)
+    lastWeekPlan = plan
     plan = seedPlan()
     writeJson(STORAGE_KEY_PLAN, plan)
   }

@@ -1,4 +1,4 @@
-import { usePwaStatus } from '../../app/pwa-context'
+import { usePwaStatus } from '../../app/use-pwa-status'
 
 export function PwaStatusBanners() {
   const { isOffline, needRefresh, dismissUpdate, applyUpdate } = usePwaStatus()

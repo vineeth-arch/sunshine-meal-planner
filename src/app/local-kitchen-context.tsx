@@ -57,6 +57,7 @@ import {
 } from '../services/local/localStorageService'
 import { listDishImagesAsDataUrls, listIngredientImagesAsDataUrls } from '../services/local/imageStore'
 import { canEdit, isAdmin } from '../features/auth/access'
+import { isMockAuthEnabled } from '../features/auth/test-auth'
 import { getDishes, createDish, deleteDish as deleteDishDocument, updateDish } from '../services/firestore/dishes'
 import {
   createIngredient,
@@ -221,6 +222,7 @@ function mapFirestoreIngredientToDomain(ingredient: Awaited<ReturnType<typeof ge
 }
 
 export function LocalKitchenProvider({ children }: PropsWithChildren) {
+  const mockAuthEnabled = isMockAuthEnabled()
   const auth = useAuth()
   const [state, setState] = useState<LocalKitchenState>(() => loadKitchenState())
   const [loading, setLoading] = useState(true)
@@ -312,7 +314,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }, [auth.profile, auth.user, replaceState, state])
 
   const refreshData = useCallback(async () => {
-    if (!auth.user || !auth.profile) {
+    if (mockAuthEnabled || !auth.user || !auth.profile) {
       setLoading(false)
       return
     }
@@ -326,7 +328,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
     } finally {
       setLoading(false)
     }
-  }, [auth.profile, auth.user, buildContextState])
+  }, [auth.profile, auth.user, buildContextState, mockAuthEnabled])
 
   useEffect(() => {
     if (auth.loading || auth.profileState === 'loading') {

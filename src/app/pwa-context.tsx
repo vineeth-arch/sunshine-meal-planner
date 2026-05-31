@@ -1,21 +1,11 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type PropsWithChildren,
 } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
-
-type PwaStatusContextValue = {
-  isOffline: boolean
-  needRefresh: boolean
-  dismissUpdate(): void
-  applyUpdate(): Promise<void>
-}
-
-const PwaStatusContext = createContext<PwaStatusContextValue | null>(null)
+import { PwaStatusContext, type PwaStatusContextValue } from './pwa-status-context'
 
 export function PwaStatusProvider({ children }: PropsWithChildren) {
   const [isOffline, setIsOffline] = useState(() => typeof navigator !== 'undefined' && !navigator.onLine)
@@ -54,13 +44,4 @@ export function PwaStatusProvider({ children }: PropsWithChildren) {
   }), [isOffline, needRefresh, setNeedRefresh, updateServiceWorker])
 
   return <PwaStatusContext.Provider value={value}>{children}</PwaStatusContext.Provider>
-}
-
-export function usePwaStatus() {
-  const context = useContext(PwaStatusContext)
-  if (!context) {
-    throw new Error('usePwaStatus must be used inside PwaStatusProvider')
-  }
-
-  return context
 }

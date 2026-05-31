@@ -8,12 +8,14 @@ function isDefined<T>(value: T | null | undefined): value is T {
 function normalizeImportedDish(value: unknown): Dish | null {
   if (!value || typeof value !== 'object') return null
   const dish = value as Partial<Dish>
-  if (!dish.name || !dish.category) return null
+  const name = String(dish.name ?? '').trim()
+  const category = String(dish.category ?? '').trim() as Dish['category']
+  if (!name || !category) return null
 
   return {
-    id: String(dish.id ?? `${String(dish.name).toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`),
-    name: String(dish.name),
-    category: dish.category,
+    id: String(dish.id ?? `${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`),
+    name,
+    category,
     mainIngredients: Array.isArray(dish.mainIngredients)
       ? dish.mainIngredients.map((item) => String(item).trim()).filter(Boolean)
       : [],
@@ -29,10 +31,11 @@ function normalizeImportedDish(value: unknown): Dish | null {
 function normalizeImportedIngredient(value: unknown): Ingredient | null {
   if (!value || typeof value !== 'object') return null
   const ingredient = value as Partial<Ingredient>
-  if (!ingredient.name) return null
+  const name = String(ingredient.name ?? '').trim()
+  if (!name) return null
 
   return {
-    name: String(ingredient.name),
+    name,
     emoji: String(ingredient.emoji ?? '🥗'),
     malayalam: String(ingredient.malayalam ?? ''),
     gujarati: String(ingredient.gujarati ?? ''),
