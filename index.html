@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#1A4731">
+  <meta name="theme-color" content="#F5E642">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Kitchen">
@@ -16,14 +16,14 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231A4731'/><text y='24' x='16' text-anchor='middle' font-size='20'>%F0%9F%8D%9B</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
             sans: ['DM Sans', 'Arial', 'sans-serif'],
-            display: ['Space Grotesk', 'Arial', 'sans-serif'],
+            display: ['Syne', 'Arial', 'sans-serif'],
           },
           colors: {
             cream: '#F5F5C8',
@@ -64,7 +64,7 @@
     html { scroll-behavior: smooth; }
     html, body { overscroll-behavior: none; background: var(--bg); }
     body { font-family: 'DM Sans', Arial, sans-serif; letter-spacing: -0.01em; }
-    h1, h2, h3 { font-family: 'Space Grotesk', Arial, sans-serif; text-wrap: balance; }
+    h1, h2, h3 { font-family: 'Syne', Arial, sans-serif; text-wrap: balance; }
     p { text-wrap: pretty; }
     .tabular { font-variant-numeric: tabular-nums; }
     .overflow-y-auto { -webkit-overflow-scrolling: touch; }
@@ -85,6 +85,64 @@
       background: var(--green); border: 2px solid var(--green);
       border-radius: 20px; box-shadow: var(--shadow-md);
     }
+    .tx-title { font-family: 'Syne', Arial, sans-serif; color: var(--green); }
+    .tx-copy { color: var(--muted); }
+    .tx-muted { color: var(--muted); }
+    .tx-empty { color: var(--muted); text-align: center; }
+    .tx-panel-label {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    }
+    .tx-overlay-header,
+    .tx-overlay-subhead,
+    .tx-overlay-footer {
+      background: var(--white);
+    }
+    .tx-overlay-header,
+    .tx-overlay-subhead {
+      border-bottom: 2px solid var(--green);
+    }
+    .tx-overlay-footer {
+      border-top: 2px solid var(--green);
+    }
+    .tx-close-btn {
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 1.5rem;
+    }
+    .tx-outline-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--white); color: var(--green); font-weight: 700;
+      border: 2px solid var(--green); border-radius: 9999px;
+      box-shadow: var(--shadow-sm); transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .tx-outline-btn:active { transform: scale(0.97); box-shadow: 1px 1px 0 var(--green); }
+    .tx-danger-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--white); color: #9a3c2d; font-weight: 700;
+      border: 2px solid #9a3c2d; border-radius: 9999px;
+      box-shadow: 3px 3px 0 #9a3c2d; transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .tx-danger-btn:active { transform: scale(0.97); box-shadow: 1px 1px 0 #9a3c2d; }
+    .tx-input, .tx-textarea, .tx-select {
+      width: 100%; border: 2px solid var(--green); border-radius: 12px;
+      padding: 0.7rem 0.85rem; font-size: 0.95rem; outline: none;
+      background: var(--white); color: var(--green); box-shadow: var(--shadow-sm);
+    }
+    .tx-textarea { resize: vertical; }
+    .tx-input::placeholder, .tx-textarea::placeholder { color: var(--muted); }
+    .tx-input:focus, .tx-textarea:focus, .tx-select:focus { transform: translate(-1px, -1px); box-shadow: var(--shadow-md); }
+    .tx-check-card {
+      background: var(--white); border: 1.5px solid var(--green); border-radius: 12px;
+      box-shadow: 2px 2px 0 var(--green);
+    }
+    .tx-soft-fill { background: #fbf9dc; }
+    .tx-image-well {
+      background: #fffbe9; border: 2px solid var(--green); border-radius: 16px; box-shadow: var(--shadow-sm);
+    }
+    .text-gray-800, .text-gray-700 { color: var(--green) !important; }
+    .text-gray-500, .text-gray-400, .text-gray-300, .text-gray-600 { color: var(--muted) !important; }
+    .bg-gray-50, .bg-gray-100 { background: #fffbe9 !important; }
+    .border-gray-200, .border-gray-100 { border-color: var(--green) !important; }
+    .focus\:border-green-accent:focus { border-color: var(--green) !important; box-shadow: var(--shadow-sm); }
 
     /* ── Primary CTA button ── */
     .btn-primary {
@@ -120,6 +178,7 @@
     /* ── Tab nav ── */
     .tab-btn.active { color: var(--green); }
     .tab-btn.active .tab-icon { background: var(--yellow); }
+    .tab-btn { color: var(--muted); }
     input[type=checkbox] { accent-color: var(--green); }
 
     /* ── Focus ring ── */
@@ -128,8 +187,13 @@
 
     /* ── Hover affordances ── */
     @media (hover: hover) {
-      .sabji-pick-card:hover  { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
-      .week-day-row:hover     { transform: translate(-1px,-1px); box-shadow: var(--shadow-lg); }
+      .sabji-pick-card:hover,
+      .week-day-row:hover,
+      .ingredient-card:hover,
+      .tx-outline-btn:hover,
+      .tx-danger-btn:hover {
+        transform: translate(-2px,-2px); box-shadow: var(--shadow-lg);
+      }
       .add-sabji-btn:hover, .add-gujarati-btn:hover { background: rgba(245,230,66,0.15); }
       #admin-btn:hover { border-color: var(--green); color: var(--green); }
     }
@@ -163,7 +227,7 @@
   <!-- HEADER -->
   <header class="sticky top-0 z-20 bg-cream px-4 pt-5 pb-3 flex items-start justify-between" style="border-bottom:2px solid #1A4731">
     <div>
-      <h1 class="text-2xl font-black text-green-accent" style="font-family:'Space Grotesk',Arial,sans-serif;letter-spacing:-0.03em">Mom's Kitchen</h1>
+      <h1 class="text-2xl font-black text-green-accent" style="font-family:'Syne',Arial,sans-serif;letter-spacing:-0.03em">Mom's Kitchen</h1>
       <p id="header-date" class="text-xs mt-0.5 font-medium" style="color:#4A5E50"></p>
     </div>
     <button id="admin-btn"
@@ -192,8 +256,8 @@
 
   <!-- BOTTOM NAV -->
   <nav id="bottom-nav"
-    class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-20 bg-white"
-    style="border-top:2px solid #1A4731;box-shadow:0 -4px 0 0 rgba(26,71,49,0.12)">
+    class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-20 bg-cream"
+    style="border-top:2px solid #1A4731;box-shadow:0 -4px 0 #1A4731">
     <div class="flex">
       <button data-tab="today" class="tab-btn active flex-1 flex flex-col items-center pt-3 pb-2 gap-0.5 text-[10px] font-bold text-green-accent">
         <span class="tab-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg" style="background:#F5E642">📅</span>
@@ -634,9 +698,21 @@ function removeOverlay(id) {
 
 function showToast(msg, type = 'info') {
   const container = document.getElementById('toast-container');
-  const colors = { info: 'bg-green-house text-white', error: 'bg-red-600 text-white', success: 'bg-green-accent text-white' };
+  const colors = {
+    info: 'bg-green-house text-white',
+    error: 'text-white',
+    success: 'bg-green-accent text-white'
+  };
   const div = document.createElement('div');
   div.className = `toast pointer-events-none w-full text-sm font-medium px-4 py-3 rounded-[12px] mb-2 ${colors[type] || colors.info}`;
+  if (type === 'error') {
+    div.style.background = '#9a3c2d';
+    div.style.border = '2px solid #7e2d20';
+    div.style.boxShadow = '4px 4px 0 #7e2d20';
+  } else {
+    div.style.border = '2px solid #1A4731';
+    div.style.boxShadow = '4px 4px 0 #1A4731';
+  }
   div.textContent = msg;
   container.appendChild(div);
   setTimeout(() => div.remove(), 3000);
@@ -920,10 +996,10 @@ function renderDayView(dayKey, tabId = 'tab-today') {
   container.innerHTML = `
     <div class="px-4 pt-1">
       <div class="flex items-center justify-between mb-3">
-        <p class="text-sm font-semibold text-gray-500 capitalize">${isToday ? "Today's plan" : DAY_FULL[dayKey]}</p>
-        <button class="ing-needed-btn text-xs font-medium text-green-accent border border-green-accent rounded-pill px-3 py-1.5 active:scale-95 transition-transform">🧾 Ingredients</button>
+        <p class="tx-panel-label capitalize">${isToday ? "Today's plan" : DAY_FULL[dayKey]}</p>
+        <button class="ing-needed-btn tx-outline-btn px-3 py-1.5 text-xs">🧾 Ingredients</button>
       </div>
-      ${blank ? `<p class="text-xs text-gray-400 mb-3 -mt-1">Nothing planned yet. Tap a <span class="text-green-accent font-medium">+ Add</span> below to start, or use <span class="text-green-accent font-medium">By Ingredients</span> in the picker.</p>` : ''}
+      ${blank ? `<p class="text-xs tx-copy mb-3 -mt-1">Nothing planned yet. Tap a <span class="font-medium" style="color:#1A4731">+ Add</span> below to start, or use <span class="font-medium" style="color:#1A4731">By Ingredients</span> in the picker.</p>` : ''}
       ${renderMealCard(dayKey, 'breakfast', plan.breakfast)}
       ${renderMealCard(dayKey, 'lunch', plan.lunch)}
       ${renderMealCard(dayKey, 'dinner', plan.dinner)}
@@ -946,12 +1022,12 @@ function renderNextDayView() {
   container.innerHTML = `
     <div class="px-4 pt-1">
       <div class="flex items-center justify-between mb-3">
-        <p class="text-sm font-semibold text-gray-500 capitalize">Tomorrow — ${DAY_FULL[tKey]}</p>
+        <p class="tx-panel-label capitalize">Tomorrow — ${DAY_FULL[tKey]}</p>
         <div class="flex gap-2">
-          <button id="tomorrow-ing-btn" class="text-xs font-medium text-green-accent border border-green-accent rounded-pill px-3 py-1.5 min-h-[36px] active:scale-95 transition-transform">🧾 Ingredients</button>
+          <button id="tomorrow-ing-btn" class="tx-outline-btn px-3 py-1.5 min-h-[36px] text-xs">🧾 Ingredients</button>
           ${empty
-            ? `<button id="copy-today-btn" class="text-xs font-semibold text-green-accent border border-green-accent rounded-pill px-3 py-1.5 min-h-[36px] active:scale-95 transition-transform">Copy Today</button>`
-            : `<button id="clear-tomorrow-btn" class="text-xs font-medium text-red-400 border border-red-200 rounded-pill px-3 py-1.5 min-h-[36px] active:scale-95 transition-transform">Clear</button>`
+            ? `<button id="copy-today-btn" class="tx-outline-btn px-3 py-1.5 min-h-[36px] text-xs">Copy Today</button>`
+            : `<button id="clear-tomorrow-btn" class="tx-danger-btn px-3 py-1.5 min-h-[36px] text-xs">Clear</button>`
           }
         </div>
       </div>
@@ -1002,10 +1078,10 @@ function renderWeekView() {
   container.innerHTML = `
     <div class="px-4 pt-1">
       <div class="flex items-center justify-between mb-3">
-        <p class="text-sm font-semibold text-gray-500">This Week</p>
+        <p class="tx-panel-label">This Week</p>
         <div class="flex gap-2">
-          ${hasLastWeek ? `<button id="use-lastweek-btn" class="text-xs font-medium text-gray-500 border border-gray-200 rounded-pill px-3 py-1.5 active:scale-95 transition-transform">Use Last Week</button>` : ''}
-          <button id="shopping-list-btn" class="text-xs font-semibold text-green-accent border border-green-accent rounded-pill px-3 py-1.5 active:scale-95 transition-transform">🛒 Shopping List</button>
+          ${hasLastWeek ? `<button id="use-lastweek-btn" class="tx-outline-btn px-3 py-1.5 text-xs">Use Last Week</button>` : ''}
+          <button id="shopping-list-btn" class="tx-outline-btn px-3 py-1.5 text-xs">🧾 Ingredients</button>
         </div>
       </div>
       <div class="flex flex-col gap-2.5">
@@ -1021,9 +1097,9 @@ function renderWeekView() {
                 ${isToday ? '<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#F5E642;color:#1A4731;border:1.5px solid #1A4731">Now</span>' : '<span style="color:#4A5E50" class="text-sm">→</span>'}
               </div>
               <div class="flex flex-col gap-0.5">
-                <div class="flex gap-1.5 text-xs" style="color:#4A5E50"><span class="text-base leading-none">🌅</span><span class="truncate">${b}</span></div>
-                <div class="flex gap-1.5 text-xs" style="color:#4A5E50"><span class="text-base leading-none">☀️</span><span class="truncate">${l}</span></div>
-                <div class="flex gap-1.5 text-xs" style="color:#4A5E50"><span class="text-base leading-none">🌙</span><span class="truncate">${d}</span></div>
+                <div class="flex gap-1.5 text-xs tx-copy"><span class="text-base leading-none">🌅</span><span class="truncate">${b}</span></div>
+                <div class="flex gap-1.5 text-xs tx-copy"><span class="text-base leading-none">☀️</span><span class="truncate">${l}</span></div>
+                <div class="flex gap-1.5 text-xs tx-copy"><span class="text-base leading-none">🌙</span><span class="truncate">${d}</span></div>
               </div>
             </div>`;
         }).join('')}
@@ -1037,12 +1113,12 @@ function renderWeekView() {
       document.getElementById('tab-today').classList.remove('hidden');
       document.querySelectorAll('.tab-btn').forEach(b => {
         b.classList.remove('active','text-green-accent');
-        b.classList.add('text-gray-400');
+        b.classList.add('text-muted');
         b.querySelector('.tab-icon').classList.remove('bg-green-light');
       });
       const todayBtn = document.querySelector('[data-tab="today"]');
       todayBtn.classList.add('active','text-green-accent');
-      todayBtn.classList.remove('text-gray-400');
+      todayBtn.classList.remove('text-muted');
       todayBtn.querySelector('.tab-icon').classList.add('bg-green-light');
       renderDayView(dayKey, 'tab-today');
     });
@@ -1067,14 +1143,14 @@ function renderWeekView() {
    SABJI GRID RENDERER
 ═══════════════════════════════════════════════ */
 function renderSabjiGrid(sabjis) {
-  if (!sabjis.length) return `<div class="col-span-2 text-center text-gray-400 mt-8 text-sm">No sabjis found.</div>`;
+  if (!sabjis.length) return `<div class="col-span-2 tx-empty mt-8 text-sm">No sabjis found.</div>`;
   return sabjis.map(s => `
     <button class="sabji-pick-card tx-card p-3 text-left active:scale-95 transition-transform"
             data-sabji-id="${s.id}">
       <div class="w-full h-24 rounded-[8px] mb-2 flex items-center justify-center text-4xl overflow-hidden"
            style="background:${s.bgColor||'#f5f5f5'}" data-img-id="${s.id}">${s.emoji||'🥗'}</div>
       <p class="text-sm font-bold leading-tight" style="color:#1A4731">${s.name}</p>
-      <p class="text-xs mt-0.5 capitalize" style="color:#4A5E50">${s.category}</p>
+      <p class="text-xs mt-0.5 capitalize tx-copy">${s.category}</p>
     </button>`).join('');
 }
 
@@ -1114,15 +1190,15 @@ function openSabjiPicker(categoryFilter) {
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
 
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="picker-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">Pick a Sabji</h2>
-      <button id="picker-suggest" class="text-sm font-semibold text-green-accent h-10 flex items-center px-2">By Ingredients</button>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="picker-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">Pick a Sabji</h2>
+      <button id="picker-suggest" class="tx-outline-btn h-10 px-3 text-xs">By Ingredients</button>
     </div>
-    <div class="flex gap-2 px-4 py-3 bg-white overflow-x-auto flex-shrink-0" style="border-bottom:2px solid #1A4731">
+    <div class="tx-overlay-subhead flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0">
       ${['all','sabji','curry','gujarati'].map(cat => `
         <button class="picker-cat-btn flex-shrink-0 px-4 py-2 rounded-pill text-sm font-medium min-h-[40px] transition-colors
-          ${activeCat === cat ? 'bg-green-accent text-white' : 'bg-gray-100 text-gray-600'}" data-cat="${cat}">
+          ${activeCat === cat ? 'bg-green-accent text-white border-2 border-green-accent' : 'tx-outline-btn'}" data-cat="${cat}">
           ${cat.charAt(0).toUpperCase()+cat.slice(1)}
         </button>`).join('')}
     </div>
@@ -1139,9 +1215,9 @@ function openSabjiPicker(categoryFilter) {
   overlay.querySelectorAll('.picker-cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       overlay.querySelectorAll('.picker-cat-btn').forEach(b => {
-        b.className = b.className.replace('bg-green-accent text-white','bg-gray-100 text-gray-600');
+        b.className = b.className.replace('bg-green-accent text-white border-2 border-green-accent','tx-outline-btn');
       });
-      btn.className = btn.className.replace('bg-gray-100 text-gray-600','bg-green-accent text-white');
+      btn.className = btn.className.replace('tx-outline-btn','bg-green-accent text-white border-2 border-green-accent');
       const cat = btn.dataset.cat;
       const filtered = cat === 'all' ? repo : repo.filter(s => s.category === cat);
       const grid = overlay.querySelector('#picker-grid');
@@ -1177,26 +1253,25 @@ function openIngredientChecklist() {
   overlay.id = 'ingredient-overlay';
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="ing-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">What's Available?</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="ing-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">What's Available?</h2>
       <div class="w-10"></div>
     </div>
-    <div class="px-4 py-2.5 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <p class="text-xs" style="color:#4A5E50">Staples (salt, coconut, tamarind…) are always counted as available.</p>
+    <div class="tx-overlay-subhead px-4 py-2.5 flex-shrink-0">
+      <p class="text-xs tx-copy">Staples (salt, coconut, tamarind…) are always counted as available.</p>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
       <div class="grid grid-cols-2 gap-2">
         ${sorted.map(ing => `
-          <label class="flex items-center gap-2.5 bg-white rounded-[10px] px-3 py-3 min-h-[48px] cursor-pointer select-none"
-                 style="box-shadow:2px 2px 0 #1A4731;border:1.5px solid #1A4731">
+          <label class="tx-check-card flex items-center gap-2.5 px-3 py-3 min-h-[48px] cursor-pointer select-none">
             <input type="checkbox" class="ingredient-check w-5 h-5 flex-shrink-0" value="${ing}">
-            <span class="text-sm text-gray-700 capitalize">${ing}</span>
+            <span class="text-sm" style="color:#1A4731">${ing}</span>
           </label>`).join('')}
       </div>
     </div>
-    <div class="px-4 py-4 bg-white flex-shrink-0" style="border-top:2px solid #1A4731">
-      <button id="ing-suggest-btn" class="w-full btn-primary py-4 text-base active:scale-95 transition-transform">
+    <div class="tx-overlay-footer px-4 py-4 flex-shrink-0">
+      <button id="ing-suggest-btn" class="w-full btn-primary py-4 text-base">
         Show Possible Sabjis
       </button>
     </div>`;
@@ -1220,17 +1295,17 @@ function openSuggestionResultsOverlay(suggestions) {
   overlay.id = 'suggestion-results-overlay';
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="sr-back" class="w-10 h-10 flex items-center justify-center text-gray-400 text-xl">←</button>
-      <h2 class="text-base font-semibold text-gray-800">You Can Make These</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="sr-back" class="tx-close-btn text-xl">←</button>
+      <h2 class="tx-title text-base font-semibold">You Can Make These</h2>
       <div class="w-10"></div>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
       ${suggestions.length === 0
         ? `<div class="text-center mt-16">
              <p class="text-5xl mb-4">🥺</p>
-             <p class="text-gray-500 text-sm">No exact matches. Try checking more ingredients.</p>
-             <button id="sr-back2" class="mt-6 bg-green-accent text-white rounded-pill px-8 py-3 font-medium active:scale-95 transition-transform">Go Back</button>
+             <p class="tx-copy text-sm">No exact matches. Try checking more ingredients.</p>
+             <button id="sr-back2" class="mt-6 btn-primary px-8 py-3 text-sm">Go Back</button>
            </div>`
         : `<div class="grid grid-cols-2 gap-3">${renderSabjiGrid(suggestions)}</div>`
       }
@@ -1276,18 +1351,18 @@ function openMissingIngredientOverlay(sabjiId) {
   overlay.id = 'missing-ingredient-overlay';
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="mi-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">Alternatives</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="mi-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">Alternatives</h2>
       <div class="w-10"></div>
     </div>
-    <div class="mx-4 mt-4 bg-amber-50 border border-amber-100 rounded-[12px] px-4 py-3 flex-shrink-0">
-      <p class="text-sm font-semibold text-amber-800">Missing ingredient for <em>${original?.name||'this sabji'}</em>?</p>
-      <p class="text-xs text-amber-600 mt-1">These sabjis share ingredients with it:</p>
+    <div class="mx-4 mt-4 tx-card px-4 py-3 flex-shrink-0" style="background:#fff6c9">
+      <p class="text-sm font-semibold" style="color:#1A4731">Missing ingredient for <em>${original?.name||'this sabji'}</em>?</p>
+      <p class="text-xs tx-copy mt-1">These sabjis share ingredients with it.</p>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
       ${alts.length === 0
-        ? `<p class="text-center text-gray-400 mt-12 text-sm">No similar sabjis in your repository.</p>`
+        ? `<p class="tx-empty mt-12 text-sm">No similar sabjis in your repository.</p>`
         : `<div class="grid grid-cols-2 gap-3">${renderSabjiGrid(alts)}</div>`
       }
     </div>`;
@@ -1296,78 +1371,6 @@ function openMissingIngredientOverlay(sabjiId) {
   overlay.querySelector('#mi-close').addEventListener('click', () => removeOverlay('missing-ingredient-overlay'));
   const grid = overlay.querySelector('.grid');
   if (grid) { bindPickerGridEvents(grid); loadImagesIntoGrid(grid); }
-}
-
-/* ═══════════════════════════════════════════════
-   SHOPPING LIST
-═══════════════════════════════════════════════ */
-function openShoppingList() {
-  removeOverlay('shopping-list-overlay');
-  const plan = loadWeeklyPlan();
-  const staples = getStaplesSet();
-  const counts = {};
-
-  if (plan?.days) {
-    DAYS.forEach(day => {
-      const dp = plan.days[day] || emptyDayPlan();
-      const allIds = [
-        ...(dp.breakfast?.sabjis || []),
-        dp.lunch?.curry, dp.lunch?.sabji, dp.lunch?.gujaratiSabji,
-        dp.dinner?.curry, ...(dp.dinner?.sabjis || []), dp.dinner?.gujaratiSabji
-      ].filter(Boolean);
-      allIds.forEach(id => {
-        const s = getSabjiById(id);
-        if (!s) return;
-        s.mainIngredients.forEach(ing => {
-          if (!staples.has(ing.toLowerCase())) {
-            counts[ing] = (counts[ing] || 0) + 1;
-          }
-        });
-      });
-    });
-  }
-
-  const items = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-
-  const overlay = document.createElement('div');
-  overlay.id = 'shopping-list-overlay';
-  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
-  overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="sl-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">🛒 Shopping List</h2>
-      <div class="w-10"></div>
-    </div>
-    <div class="px-4 py-2 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <p class="text-xs text-gray-400">Ingredients needed this week (staples excluded). Tap to check off.</p>
-    </div>
-    <div class="flex-1 overflow-y-auto px-4 py-4">
-      ${items.length === 0
-        ? `<p class="text-center text-gray-400 mt-12 text-sm">Plan some meals first to see your shopping list.</p>`
-        : `<div class="flex flex-col gap-2">
-             ${items.map(([ing, count]) => `
-               <label class="flex items-center gap-3 bg-white rounded-[12px] px-4 py-3.5 cursor-pointer select-none"
-                      style="box-shadow:2px 2px 0 #1A4731;border:1.5px solid #1A4731">
-                 <input type="checkbox" class="w-5 h-5 flex-shrink-0">
-                 <span class="text-sm text-gray-800 flex-1 capitalize">${ing}</span>
-                 <span class="text-xs text-gray-400 font-medium tabular">${count} meal${count>1?'s':''}</span>
-               </label>`).join('')}
-           </div>`
-      }
-    </div>`;
-
-  document.getElementById('app').appendChild(overlay);
-  overlay.querySelector('#sl-close').addEventListener('click', () => removeOverlay('shopping-list-overlay'));
-
-  // Strikethrough on check
-  overlay.querySelectorAll('input[type=checkbox]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const label = cb.closest('label');
-      const text = label.querySelector('span');
-      if (cb.checked) { label.classList.add('opacity-50'); text.classList.add('line-through'); }
-      else { label.classList.remove('opacity-50'); text.classList.remove('line-through'); }
-    });
-  });
 }
 
 /* ═══════════════════════════════════════════════
@@ -1392,12 +1395,12 @@ function openAdminOverlay() {
   overlay.id = 'admin-overlay';
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="admin-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">Settings</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="admin-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">Settings</h2>
       <div class="w-10"></div>
     </div>
-    <div class="flex gap-2 px-4 py-3 bg-white overflow-x-auto flex-shrink-0" style="border-bottom:2px solid #1A4731">
+    <div class="tx-overlay-subhead flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0">
       ${ADMIN_SECTIONS.map(s => `
         <button class="admin-section-btn flex-shrink-0 px-3.5 py-2 rounded-pill text-sm font-semibold min-h-[40px] transition-colors"
           data-section="${s.key}"
@@ -1594,9 +1597,9 @@ function openDishEditor(id, category) {
   overlay.id = 'dish-editor-overlay';
   overlay.className = 'fixed inset-0 z-[60] tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="de-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">${isNew ? 'Add' : 'Edit'} ${CAT_LABEL[cat]}</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="de-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${isNew ? 'Add' : 'Edit'} ${CAT_LABEL[cat]}</h2>
       <div class="w-10"></div>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
@@ -1881,9 +1884,9 @@ function openRecipeView(sabjiId) {
   overlay.id = 'recipe-view-overlay';
   overlay.className = 'fixed inset-0 z-[60] tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="rv-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">${s.emoji||'🥗'} ${s.name}</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="rv-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${s.emoji||'🥗'} ${s.name}</h2>
       <div class="w-10"></div>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
@@ -1940,22 +1943,21 @@ async function renderIngredientsView() {
 
   container.innerHTML = `
     <div class="px-4 pt-1">
-      <p class="text-sm font-semibold text-gray-500 mb-3">Pantry</p>
+      <p class="tx-panel-label mb-3">Pantry</p>
       <div class="flex gap-2 mb-4">
-        <button id="fridge-mode-btn" class="flex-1 btn-primary py-3 text-sm active:scale-95 transition-transform">🧊 Plan from Fridge</button>
-        <button id="add-ingredient-btn" class="bg-white border border-gray-200 font-semibold rounded-pill py-3 px-4 text-sm text-gray-600 active:scale-95 transition-transform">+ Add</button>
+        <button id="fridge-mode-btn" class="flex-1 btn-primary py-3 text-sm">🧊 Plan from Fridge</button>
+        <button id="add-ingredient-btn" class="tx-outline-btn py-3 px-4 text-sm">+ Add</button>
       </div>
       ${ingredients.length === 0
-        ? '<p class="text-center text-gray-400 mt-12 text-sm">No ingredients yet.</p>'
+        ? '<p class="tx-empty mt-12 text-sm">No ingredients yet.</p>'
         : `<div class="grid grid-cols-2 gap-3" id="ingredients-grid">
             ${ingredients.map(ing => `
-              <button class="ingredient-card bg-white rounded-[12px] p-3 text-left active:scale-95 transition-transform"
-                      style="box-shadow:4px 4px 0 #1A4731;border:2px solid #1A4731"
+              <button class="ingredient-card tx-card p-3 text-left active:scale-95 transition-transform"
                       data-ingredient-name="${ing.name}">
-                <div class="w-full h-20 rounded-[8px] mb-2 flex items-center justify-center text-3xl overflow-hidden bg-gray-50"
+                <div class="w-full h-20 rounded-[8px] mb-2 flex items-center justify-center text-3xl overflow-hidden tx-soft-fill"
                      data-ingredient-img="${ing.name}">${ing.emoji || '🥗'}</div>
                 <p class="text-sm font-medium text-gray-800 leading-tight capitalize">${ing.name}</p>
-                ${(ing.malayalam || ing.gujarati) ? `<p class="text-[11px] mt-0.5 leading-tight capitalize" style="color:#4A5E50">${[ing.malayalam, ing.gujarati].filter(Boolean).join(' · ')}</p>` : ''}
+                ${(ing.malayalam || ing.gujarati) ? `<p class="text-[11px] mt-0.5 leading-tight capitalize tx-copy">${[ing.malayalam, ing.gujarati].filter(Boolean).join(' · ')}</p>` : ''}
               </button>`).join('')}
            </div>`
       }
@@ -1993,37 +1995,37 @@ function openIngredientEditor(name, origin) {
   overlay.id = 'ingredient-editor-overlay';
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="ie-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">${isNew ? 'Add Ingredient' : 'Edit Ingredient'}</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="ie-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${isNew ? 'Add Ingredient' : 'Edit Ingredient'}</h2>
       <div class="w-10"></div>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
       <div class="flex flex-col gap-3">
-        <div id="ie-photo-preview" class="w-full h-32 rounded-[12px] bg-gray-100 flex items-center justify-center text-5xl overflow-hidden">
+        <div id="ie-photo-preview" class="tx-image-well w-full h-32 flex items-center justify-center text-5xl overflow-hidden">
           ${existing?.emoji || '🥗'}
         </div>
         <div class="flex gap-2">
-          <label class="flex-1 flex items-center justify-center gap-2 text-sm font-semibold rounded-pill py-2.5 cursor-pointer" style="border:1.5px solid #1A4731;color:#1A4731">
+          <label class="tx-outline-btn flex-1 gap-2 text-sm py-2.5 cursor-pointer">
             <input type="file" accept="image/*" capture="environment" id="ie-photo-input" class="hidden">
             📷 Photo
           </label>
         </div>
         <input id="ie-image-url" type="url" placeholder="🔗 Or paste image URL" value="${(existing?.image||'').replace(/"/g,'&quot;')}"
-          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+          class="tx-input">
         <input id="ie-name" type="text" placeholder="Name (e.g. drumstick)" value="${existing?.name || ''}"
-          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
-        <button id="ie-autofill" class="rounded-pill py-2.5 text-sm font-semibold" style="border:1.5px solid #1A4731;color:#1A4731">✨ Auto-fill Malayalam + Gujarati names</button>
+          class="tx-input">
+        <button id="ie-autofill" class="tx-outline-btn py-2.5 text-sm">✨ Auto-fill Malayalam + Gujarati names</button>
         <input id="ie-malayalam" type="text" placeholder="Malayalam name in English (e.g. muringakka)" value="${existing?.malayalam || ''}"
-          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+          class="tx-input">
         <input id="ie-gujarati" type="text" placeholder="Gujarati name in English (e.g. saragvo)" value="${existing?.gujarati || ''}"
-          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+          class="tx-input">
         <input id="ie-emoji" type="text" placeholder="Emoji" maxlength="2" value="${existing?.emoji || ''}"
-          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent text-center">
-        <button id="ie-save-btn" class="w-full btn-primary py-4 text-base active:scale-95 transition-transform">
+          class="tx-input text-center">
+        <button id="ie-save-btn" class="w-full btn-primary py-4 text-base">
           ${isNew ? '+ Add Ingredient' : 'Save Changes'}
         </button>
-        ${!isNew ? `<button id="ie-delete-btn" class="w-full text-red-400 border border-red-200 font-medium rounded-pill py-3 text-sm active:scale-95 transition-transform">🗑 Delete Ingredient</button>` : ''}
+        ${!isNew ? `<button id="ie-delete-btn" class="w-full tx-danger-btn py-3 text-sm">🗑 Delete Ingredient</button>` : ''}
       </div>
     </div>`;
 
@@ -2182,19 +2184,18 @@ function openIngredientsNeeded(scope) {
   const data = computeIngredientsNeeded(scope);
   const scopeLabel = scope === 'today' ? "Today's Ingredients"
     : scope === 'tomorrow' ? "Tomorrow's Ingredients"
-    : scope === 'week' ? 'Weekly Shopping List'
+    : scope === 'week' ? 'Weekly Ingredients'
     : `${DAY_FULL[scope] || scope} Ingredients`;
 
   function buildChecklist(counts) {
     const items = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-    if (!items.length) return '<p class="text-xs text-gray-400 py-2">Nothing needed.</p>';
+    if (!items.length) return '<p class="text-xs tx-copy py-2">Nothing needed.</p>';
     return `<div class="flex flex-col gap-2">
       ${items.map(([ing, count]) => `
-        <label class="flex items-center gap-3 bg-white rounded-[12px] px-4 py-3 cursor-pointer select-none"
-               style="box-shadow:2px 2px 0 #1A4731;border:1.5px solid #1A4731">
+        <label class="tx-check-card flex items-center gap-3 px-4 py-3 cursor-pointer select-none">
           <input type="checkbox" class="ing-check w-5 h-5 flex-shrink-0">
-          <span class="text-sm text-gray-800 flex-1 capitalize">${ing}</span>
-          <span class="text-xs text-gray-400 font-medium tabular">${count}×</span>
+          <span class="text-sm flex-1 capitalize" style="color:#1A4731">${ing}</span>
+          <span class="text-xs tx-copy font-medium tabular">${count}×</span>
         </label>`).join('')}
     </div>`;
   }
@@ -2209,25 +2210,25 @@ function openIngredientsNeeded(scope) {
   overlay.id = 'ingredients-needed-overlay';
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="in-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">${scopeLabel}</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="in-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${scopeLabel}</h2>
       <div class="w-10"></div>
     </div>
-    <div class="px-4 py-2 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <p class="text-xs text-gray-400">Staples always excluded. Tap to check off.</p>
+    <div class="tx-overlay-subhead px-4 py-2 flex-shrink-0">
+      <p class="text-xs tx-copy">Staples always excluded. Tap to check off.</p>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
       ${sections.length === 0
-        ? '<p class="text-center text-gray-400 mt-12 text-sm">Plan some meals first.</p>'
+        ? '<p class="tx-empty mt-12 text-sm">Plan some meals first.</p>'
         : `${sections.map(s => `
             <div class="mb-4">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">${s.label}</p>
+              <p class="tx-panel-label mb-2">${s.label}</p>
               ${buildChecklist(s.counts)}
             </div>`).join('')}
            ${sections.length > 1 ? `
             <div class="mb-4 pt-4" style="border-top:2px solid #1A4731">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">📦 Total</p>
+              <p class="tx-panel-label mb-2">📦 Total</p>
               ${buildChecklist(data.total)}
             </div>` : ''}
           `
@@ -2257,35 +2258,34 @@ async function openFridgeMode() {
   overlay.id = 'fridge-mode-overlay';
   overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
   overlay.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-4 bg-white flex-shrink-0" style="border-bottom:2px solid #1A4731">
-      <button id="fm-close" class="w-10 h-10 flex items-center justify-center text-gray-400 text-2xl">✕</button>
-      <h2 class="text-base font-semibold text-gray-800">🧊 What's in the Fridge?</h2>
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="fm-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">🧊 What's in the Fridge?</h2>
       <div class="w-10"></div>
     </div>
-    <div class="px-4 py-2.5 bg-white border-b border-gray-100 flex-shrink-0">
-      <p class="text-xs text-gray-400">Check what you have. Staples are always assumed available.</p>
+    <div class="tx-overlay-subhead px-4 py-2.5 flex-shrink-0">
+      <p class="text-xs tx-copy">Check what you have. Staples are always assumed available.</p>
     </div>
     <div class="flex-1 overflow-y-auto px-4 py-4">
       ${ingredients.length === 0
-        ? '<p class="text-center text-gray-400 mt-12 text-sm">No ingredients in pantry yet.</p>'
+        ? '<p class="tx-empty mt-12 text-sm">No ingredients in pantry yet.</p>'
         : `<div class="grid grid-cols-2 gap-2" id="fridge-grid">
             ${ingredients.map(ing => `
-              <label class="flex items-center gap-2.5 bg-white rounded-[10px] px-3 py-3 min-h-[52px] cursor-pointer select-none"
-                     style="box-shadow:2px 2px 0 #1A4731;border:1.5px solid #1A4731">
+              <label class="tx-check-card flex items-center gap-2.5 px-3 py-3 min-h-[52px] cursor-pointer select-none">
                 <input type="checkbox" class="fridge-check w-5 h-5 flex-shrink-0" value="${ing.name}">
-                <div class="w-7 h-7 rounded-full flex items-center justify-center text-lg overflow-hidden flex-shrink-0 bg-gray-50"
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-lg overflow-hidden flex-shrink-0 tx-soft-fill"
                      data-ing-img="${ing.name}" data-img-url="${ing.image||''}">${ing.emoji || '🥗'}</div>
-                <span class="text-sm text-gray-700 capitalize leading-tight flex-1">${ing.name}</span>
+                <span class="text-sm capitalize leading-tight flex-1" style="color:#1A4731">${ing.name}</span>
               </label>`).join('')}
            </div>`
       }
     </div>
-    <div class="px-4 py-4 bg-white flex-shrink-0" style="border-top:2px solid #1A4731">
+    <div class="tx-overlay-footer px-4 py-4 flex-shrink-0">
       <label class="flex items-center gap-3 mb-4 cursor-pointer select-none">
         <input type="checkbox" id="gujarati-toggle" class="w-5 h-5">
-        <span class="text-sm text-gray-700">Include Gujarati sabji for wife?</span>
+        <span class="text-sm" style="color:#1A4731">Include Gujarati sabji for wife?</span>
       </label>
-      <button id="fm-generate-btn" class="w-full btn-primary py-4 text-base active:scale-95 transition-transform">
+      <button id="fm-generate-btn" class="w-full btn-primary py-4 text-base">
         Generate Today + Tomorrow
       </button>
     </div>`;
@@ -2383,12 +2383,12 @@ function generatePlanFromFridge(available, includeGujarati) {
   document.getElementById('tab-today').classList.remove('hidden');
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.remove('active', 'text-green-accent');
-    b.classList.add('text-gray-400');
+    b.classList.add('text-muted');
     b.querySelector('.tab-icon').classList.remove('bg-green-light');
   });
   const todayBtn = document.querySelector('[data-tab="today"]');
   todayBtn.classList.add('active', 'text-green-accent');
-  todayBtn.classList.remove('text-gray-400');
+  todayBtn.classList.remove('text-muted');
   todayBtn.querySelector('.tab-icon').classList.add('bg-green-light');
   renderDayView(getTodayKey(), 'tab-today');
 
@@ -2416,11 +2416,11 @@ function initTabs() {
 
       buttons.forEach(b => {
         b.classList.remove('active','text-green-accent');
-        b.classList.add('text-gray-400');
+        b.classList.add('text-muted');
         b.querySelector('.tab-icon').classList.remove('bg-green-light');
       });
       btn.classList.add('active','text-green-accent');
-      btn.classList.remove('text-gray-400');
+      btn.classList.remove('text-muted');
       btn.querySelector('.tab-icon').classList.add('bg-green-light');
 
       if (target === 'today') renderDayView(getTodayKey(), 'tab-today');

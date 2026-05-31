@@ -1,10 +1,10 @@
-const CACHE_NAME = 'kitchen-v5';
+const CACHE_NAME = 'kitchen-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap'
+  'https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap'
 ];
 
 self.addEventListener('install', event => {
