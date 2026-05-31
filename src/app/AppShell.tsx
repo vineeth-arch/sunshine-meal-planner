@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { MobileNav } from '../components/navigation/MobileNav'
+import { isAdmin } from '../features/auth/access'
 import { getProfileLabelFromEmail } from '../features/auth/profile-options'
 import { useAuth } from '../features/auth/use-auth'
 
@@ -12,6 +13,7 @@ export function AppShell() {
     day: 'numeric',
   }).format(new Date())
   const signedInLabel = profile?.displayName || getProfileLabelFromEmail(user?.email) || user?.email || 'Signed in'
+  const showAdmin = isAdmin(profile)
 
   return (
     <div className="mk-app-frame">
@@ -26,6 +28,11 @@ export function AppShell() {
             <NavLink to="/ingredients" className="mk-chip mk-chip-soft">
               Ingredients
             </NavLink>
+            {showAdmin ? (
+              <NavLink to="/admin" className="mk-chip mk-chip-soft">
+                Admin
+              </NavLink>
+            ) : null}
             <NavLink to="/settings" className="mk-chip mk-chip-strong">
               Settings
             </NavLink>

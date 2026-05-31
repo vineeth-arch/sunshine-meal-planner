@@ -1,9 +1,13 @@
 import { DayPlannerView } from './DayPlannerView'
 import { getTodayKey, getTomorrowKey } from '../../lib/date/plans'
 import { useLocalKitchen } from '../../app/local-kitchen-context'
+import { canEdit } from '../auth/access'
+import { useAuth } from '../auth/use-auth'
 
 export function TomorrowScreen() {
   const { copyDay, clearDay } = useLocalKitchen()
+  const { profile } = useAuth()
+  const allowEdit = canEdit(profile)
 
   return (
     <DayPlannerView
@@ -11,7 +15,7 @@ export function TomorrowScreen() {
       eyebrow="Tomorrow"
       title="Tomorrow's family menu"
       description="Reuse today when it helps, then adjust individual slots for the next day."
-      extraActions={
+      extraActions={allowEdit ? (
         <>
           <button
             type="button"
@@ -28,7 +32,7 @@ export function TomorrowScreen() {
             Clear tomorrow
           </button>
         </>
-      }
+      ) : null}
     />
   )
 }

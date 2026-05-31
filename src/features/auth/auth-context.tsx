@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } fro
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
 
 import { getFirebaseConfigError, getFirebaseServices, hasFirebaseConfig } from '../../lib/firebase'
-import { ensureUserProfile } from '../../services/firestore/household'
+import { getUserProfile } from '../../services/firestore/firestoreProfileService'
 import type { UserProfile } from '../../types/domain'
 import { AuthContext, type AuthContextValue } from './auth-context-value'
 
@@ -13,22 +13,36 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [error, setError] = useState<string | null>(configError)
+  const [profileState, setProfileState] = useState<AuthContextValue['profileState']>(enabled ? 'loading' : 'idle')
 
   const refreshProfileForUser = useCallback(async (nextUser: User | null) => {
     if (!nextUser) {
       setProfile(null)
       setError(configError)
+      setProfileState(enabled ? 'idle' : 'error')
       return
     }
 
+    setProfileState('loading')
+
     try {
-      const nextProfile = await ensureUserProfile(nextUser)
+      const nextProfile = await getUserProfile(nextUser.uid)
+      if (!nextProfile) {
+        setProfile(null)
+        setError('No Firestore profile exists for this account yet.')
+        setProfileState('setup-required')
+        return
+      }
+
       setProfile(nextProfile)
       setError(null)
+      setProfileState('ready')
     } catch (caught) {
+      setProfile(null)
       setError(caught instanceof Error ? caught.message : 'Could not load profile.')
+      setProfileState('error')
     }
-  }, [configError])
+  }, [configError, enabled])
 
   useEffect(() => {
     const services = getFirebaseServices()
@@ -48,6 +62,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user,
       profile,
       error,
+      profileState,
       async signIn(email, password) {
         const services = getFirebaseServices()
         if (!services) throw new Error('Firebase is not configured.')
@@ -62,7 +77,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         await refreshProfileForUser(user)
       },
     }),
-    [enabled, loading, user, profile, error, refreshProfileForUser],
+    [enabled, loading, user, profile, error, profileState, refreshProfileForUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

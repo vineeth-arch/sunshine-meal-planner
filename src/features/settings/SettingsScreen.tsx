@@ -3,12 +3,16 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { canEdit } from '../auth/access'
+import { useAuth } from '../auth/use-auth'
 
 export function SettingsScreen() {
   const { state, exportJson, importJson, setIntegrations } = useLocalKitchen()
+  const { profile } = useAuth()
   const [importText, setImportText] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [integrations, setLocalIntegrations] = useState(state.integrations)
+  const allowEdit = canEdit(profile)
 
   function runImport(text: string) {
     try {
@@ -43,6 +47,12 @@ export function SettingsScreen() {
         title="Local settings and backup tools"
         description="Import and export the legacy JSON shape, keep integrations local, and leave auth and Firebase out of this phase."
       />
+
+      {!allowEdit ? (
+        <PanelCard>
+          <p className="mk-meta">Viewer access is read-only. Export is available, but imports and local settings edits are disabled.</p>
+        </PanelCard>
+      ) : null}
 
       <PanelCard className="mk-stack-sm">
         <h3 className="mk-subtitle">Profile placeholder</h3>
@@ -93,25 +103,31 @@ export function SettingsScreen() {
       <PanelCard className="mk-stack-sm">
         <h3 className="mk-subtitle">Import data</h3>
         <p className="mk-copy">Existing items are updated and new ones are added. Missing items are not deleted.</p>
-        <label className="mk-field">
-          Import JSON file
-          <input className="mk-input" type="file" accept="application/json,.json" onChange={handleFile} />
-        </label>
-        <textarea
-          className="mk-input mk-textarea"
-          rows={8}
-          value={importText}
-          onChange={(event) => setImportText(event.target.value)}
-          placeholder="Paste legacy export JSON here"
-        />
-        <button
-          type="button"
-          className="mk-button mk-button-primary mk-button-pad"
-          onClick={() => runImport(importText)}
-          disabled={!importText.trim()}
-        >
-          Import pasted JSON
-        </button>
+        {allowEdit ? (
+          <>
+            <label className="mk-field">
+              Import JSON file
+              <input className="mk-input" type="file" accept="application/json,.json" onChange={handleFile} />
+            </label>
+            <textarea
+              className="mk-input mk-textarea"
+              rows={8}
+              value={importText}
+              onChange={(event) => setImportText(event.target.value)}
+              placeholder="Paste legacy export JSON here"
+            />
+            <button
+              type="button"
+              className="mk-button mk-button-primary mk-button-pad"
+              onClick={() => runImport(importText)}
+              disabled={!importText.trim()}
+            >
+              Import pasted JSON
+            </button>
+          </>
+        ) : (
+          <p className="mk-meta">Import controls are hidden for viewer accounts.</p>
+        )}
       </PanelCard>
 
       <PanelCard className="mk-stack-sm">
@@ -124,6 +140,7 @@ export function SettingsScreen() {
               className="mk-input"
               value={integrations.llmBaseUrl ?? ''}
               onChange={(event) => setLocalIntegrations({ ...integrations, llmBaseUrl: event.target.value })}
+              disabled={!allowEdit}
             />
           </label>
           <label className="mk-field">
@@ -133,6 +150,7 @@ export function SettingsScreen() {
               type="password"
               value={integrations.llmKey ?? ''}
               onChange={(event) => setLocalIntegrations({ ...integrations, llmKey: event.target.value })}
+              disabled={!allowEdit}
             />
           </label>
           <label className="mk-field">
@@ -141,6 +159,7 @@ export function SettingsScreen() {
               className="mk-input"
               value={integrations.llmModel ?? ''}
               onChange={(event) => setLocalIntegrations({ ...integrations, llmModel: event.target.value })}
+              disabled={!allowEdit}
             />
           </label>
           <label className="mk-field">
@@ -150,11 +169,14 @@ export function SettingsScreen() {
               type="password"
               value={integrations.imgbbKey ?? ''}
               onChange={(event) => setLocalIntegrations({ ...integrations, imgbbKey: event.target.value })}
+              disabled={!allowEdit}
             />
           </label>
-          <button type="submit" className="mk-button mk-button-primary mk-button-pad">
-            Save integrations
-          </button>
+          {allowEdit ? (
+            <button type="submit" className="mk-button mk-button-primary mk-button-pad">
+              Save integrations
+            </button>
+          ) : null}
         </form>
       </PanelCard>
 

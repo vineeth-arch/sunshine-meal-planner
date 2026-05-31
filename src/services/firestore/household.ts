@@ -1,9 +1,7 @@
 import {
   collection,
   doc,
-  getDoc,
   serverTimestamp,
-  setDoc,
   writeBatch,
 } from 'firebase/firestore'
 import type { User } from 'firebase/auth'
@@ -11,30 +9,10 @@ import type { User } from 'firebase/auth'
 import type { LocalKitchenState, UserProfile } from '../../types/domain'
 import { getFirebaseServices } from '../../lib/firebase'
 
-export async function ensureUserProfile(user: User): Promise<UserProfile | null> {
-  const services = getFirebaseServices()
-  if (!services) return null
-
-  const ref = doc(services.db, 'users', user.uid)
-  const snap = await getDoc(ref)
-  if (snap.exists()) return snap.data() as UserProfile
-
-  const profile: UserProfile = {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    role: 'member',
-    householdId: null,
-  }
-
-  await setDoc(ref, profile)
-  return profile
-}
-
 export async function pushKitchenStateToFirestore(user: User, profile: UserProfile, state: LocalKitchenState) {
   const services = getFirebaseServices()
   if (!services) throw new Error('Firebase is not configured.')
-  if (profile.role !== 'admin' || !profile.householdId) {
+  if (profile.role !== 'admin') {
     throw new Error('An admin profile with a household is required before cloud sync.')
   }
 

@@ -1,4 +1,4 @@
-export type ProfileKey = 'admin' | 'mom' | 'dad' | 'guest'
+import type { ProfileKey } from '../../types/domain'
 
 export type ProfileOption = {
   key: ProfileKey

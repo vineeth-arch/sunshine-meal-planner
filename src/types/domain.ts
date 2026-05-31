@@ -1,5 +1,8 @@
+import type { Timestamp } from 'firebase/firestore'
+
 export type DishCategory = 'sabji' | 'curry' | 'gujarati'
-export type UserRole = 'admin' | 'member'
+export type UserRole = 'admin' | 'editor' | 'viewer'
+export type ProfileKey = 'admin' | 'mom' | 'dad' | 'guest'
 
 export interface Dish {
   id: string
@@ -149,15 +152,18 @@ export interface LocalKitchenState {
 
 export interface UserProfile {
   uid: string
-  email: string | null
   role: UserRole
-  householdId: string | null
-  displayName?: string | null
+  householdId: string
+  profileKey: ProfileKey
+  displayName: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 
-export interface HouseholdMeta {
+export interface Household {
   id: string
   name: string
-  createdAt?: unknown
-  updatedAt?: unknown
+  ownerUid: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }

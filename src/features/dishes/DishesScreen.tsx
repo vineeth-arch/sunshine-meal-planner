@@ -4,6 +4,8 @@ import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { canEdit } from '../auth/access'
+import { useAuth } from '../auth/use-auth'
 import type { Dish, DishCategory } from '../../types/domain'
 
 const CATEGORY_COLORS: Record<DishCategory, string> = {
@@ -31,9 +33,11 @@ function emptyDish(): DraftDish {
 
 export function DishesScreen() {
   const { state, saveDish, deleteDish } = useLocalKitchen()
+  const { profile } = useAuth()
   const [filter, setFilter] = useState<'all' | DishCategory>('all')
   const [draft, setDraft] = useState<DraftDish | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const allowEdit = canEdit(profile)
 
   const dishes = state.repo.filter((dish) => filter === 'all' || dish.category === filter)
 
@@ -65,9 +69,13 @@ export function DishesScreen() {
 
       <PanelCard className="mk-stack-sm">
         <div className="mk-inline-actions">
-          <button type="button" className="mk-button mk-button-primary mk-button-pad" onClick={() => setDraft(emptyDish())}>
-            Add dish
-          </button>
+          {allowEdit ? (
+            <button type="button" className="mk-button mk-button-primary mk-button-pad" onClick={() => setDraft(emptyDish())}>
+              Add dish
+            </button>
+          ) : (
+            <p className="mk-meta">Viewer access is read-only. Dish editing is available to editors and admins.</p>
+          )}
           {(['all', 'sabji', 'curry', 'gujarati'] as const).map((value) => (
             <button
               key={value}
@@ -100,21 +108,23 @@ export function DishesScreen() {
               </div>
             </div>
             {dish.referenceText ? <p className="mk-copy">{dish.referenceText}</p> : null}
-            <div className="mk-inline-actions">
-              <button type="button" className="mk-button mk-button-primary mk-button-pad-sm" onClick={() => setDraft({ ...dish })}>
-                Edit
-              </button>
-              <button
-                type="button"
-                className="mk-button mk-button-danger mk-button-pad-sm"
-                onClick={async () => {
-                  if (!window.confirm(`Delete ${dish.name}?`)) return
-                  await deleteDish(dish.id)
-                }}
-              >
-                Delete
-              </button>
-            </div>
+            {allowEdit ? (
+              <div className="mk-inline-actions">
+                <button type="button" className="mk-button mk-button-primary mk-button-pad-sm" onClick={() => setDraft({ ...dish })}>
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="mk-button mk-button-danger mk-button-pad-sm"
+                  onClick={async () => {
+                    if (!window.confirm(`Delete ${dish.name}?`)) return
+                    await deleteDish(dish.id)
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null}
           </PanelCard>
         ))}
       </div>

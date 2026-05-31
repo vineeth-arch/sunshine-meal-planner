@@ -4,6 +4,8 @@ import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { DAYS, DAY_FULL } from '../../lib/date/plans'
 import { useLocalKitchen } from '../../app/local-kitchen-context'
+import { canEdit } from '../auth/access'
+import { useAuth } from '../auth/use-auth'
 import type { DayKey, DayPlan, Dish, DishCategory } from '../../types/domain'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
 
@@ -69,6 +71,7 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
     getIngredientsNeeded,
     getOverlappingDishes,
   } = useLocalKitchen()
+  const { profile } = useAuth()
   const [picker, setPicker] = useState<PickerState | null>(null)
   const [ideasForDishId, setIdeasForDishId] = useState<string | null>(null)
   const [showIngredientsNeeded, setShowIngredientsNeeded] = useState(false)
@@ -87,6 +90,7 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
 
   const ingredientsNeeded = getIngredientsNeeded(day)
   const overlapping = ideasForDishId ? getOverlappingDishes(ideasForDishId) : []
+  const allowEdit = canEdit(profile)
 
   return (
     <div className="mk-stack-lg">
@@ -97,8 +101,9 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
           <button type="button" className="mk-button mk-button-primary mk-button-pad" onClick={() => setShowIngredientsNeeded(true)}>
             Ingredients needed
           </button>
-          {extraActions}
+          {allowEdit ? extraActions : null}
         </div>
+        {!allowEdit ? <p className="mk-meta">Viewer access is read-only. Meal plan changes are disabled.</p> : null}
       </PanelCard>
 
       {SLOT_CONFIGS.map((slot) => {
@@ -111,16 +116,20 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
                 <h3 className="mk-subtitle">{slot.label}</h3>
               </div>
               <div className="mk-inline-actions">
-                <button type="button" className="mk-button mk-button-primary mk-button-pad-sm" onClick={() => setPicker(slot)}>
-                  Pick
-                </button>
-                <button
-                  type="button"
-                  className="mk-button mk-button-secondary mk-button-pad-sm"
-                  onClick={() => clearSlot(day, slot.meal, slot.field)}
-                >
-                  Clear
-                </button>
+                {allowEdit ? (
+                  <>
+                    <button type="button" className="mk-button mk-button-primary mk-button-pad-sm" onClick={() => setPicker(slot)}>
+                      Pick
+                    </button>
+                    <button
+                      type="button"
+                      className="mk-button mk-button-secondary mk-button-pad-sm"
+                      onClick={() => clearSlot(day, slot.meal, slot.field)}
+                    >
+                      Clear
+                    </button>
+                  </>
+                ) : null}
               </div>
             </div>
 

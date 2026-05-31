@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import App from '../App'
 import { AdminScreen } from '../features/admin/AdminScreen'
-import { PublicOnlyRoute, RequireAuth } from '../features/auth/AuthRouteGuards'
+import { PublicOnlyRoute, RequireAdmin, RequireAuth } from '../features/auth/AuthRouteGuards'
 import { LoginScreen } from '../features/auth/LoginScreen'
 import { DishesScreen } from '../features/dishes/DishesScreen'
 import { IngredientsScreen } from '../features/ingredients/IngredientsScreen'
@@ -69,7 +69,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'admin',
-        element: <AdminScreen />,
+        element: (
+          <RequireAdmin>
+            <AdminScreen />
+          </RequireAdmin>
+        ),
       },
       {
         path: '*',

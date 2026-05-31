@@ -4,9 +4,10 @@ import { Navigate } from 'react-router-dom'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import type { ProfileKey } from '../../types/domain'
 import { AuthLoadingScreen } from './AuthLoadingScreen'
 import { getFriendlyAuthErrorMessage } from './auth-errors'
-import { PROFILE_OPTIONS, getProfileOption, type ProfileKey } from './profile-options'
+import { PROFILE_OPTIONS, getProfileOption } from './profile-options'
 import { useAuth } from './use-auth'
 
 export function LoginScreen() {
@@ -106,7 +107,7 @@ export function LoginScreen() {
           {activeProfile ? <p className="mk-meta">{activeProfile.helper}</p> : null}
 
           <p className="mk-meta">
-            First-time setup reminder: each profile account must already exist in Firebase Authentication before anyone can log in here.
+            First-time setup reminder: each profile account must exist in Firebase Authentication and have a matching users/{'{'}uid{'}'} Firestore profile document before anyone can open the app.
           </p>
 
           {submitError ? (

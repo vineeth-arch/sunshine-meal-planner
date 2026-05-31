@@ -6,16 +6,24 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function ownUser(userId) {
-      return signedIn() && request.auth.uid == userId;
-    }
-
     function userDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     function hasProfile() {
       return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function ownUser(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function targetUserDoc(userId) {
+      return get(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function isValidRole(role) {
+      return role in ['admin', 'editor', 'viewer'];
     }
 
     function householdRole(householdId) {
@@ -32,14 +40,27 @@ service cloud.firestore {
       return householdRole(householdId) == 'admin';
     }
 
+    function canEdit(householdId) {
+      return householdRole(householdId) in ['admin', 'editor'];
+    }
+
     match /users/{userId} {
-      allow read: if ownUser(userId);
-      allow create: if ownUser(userId)
-        && request.resource.data.role == 'member'
-        && request.resource.data.householdId == null;
-      allow update: if ownUser(userId)
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.householdId == resource.data.householdId;
+      allow read: if ownUser(userId)
+        || (hasProfile()
+          && userDoc().data.role == 'admin'
+          && targetUserDoc(userId).data.householdId == userDoc().data.householdId);
+      allow create: if hasProfile()
+        && userDoc().data.role == 'admin'
+        && request.resource.data.householdId == userDoc().data.householdId
+        && isValidRole(request.resource.data.role);
+      allow update: if hasProfile()
+        && userDoc().data.role == 'admin'
+        && resource.data.householdId == userDoc().data.householdId
+        && request.resource.data.householdId == resource.data.householdId
+        && isValidRole(request.resource.data.role);
+      allow delete: if hasProfile()
+        && userDoc().data.role == 'admin'
+        && resource.data.householdId == userDoc().data.householdId;
     }
 
     match /households/{householdId} {
@@ -49,7 +70,7 @@ service cloud.firestore {
 
     match /households/{householdId}/{document=**} {
       allow read: if inHousehold(householdId);
-      allow write: if isAdmin(householdId);
+      allow write: if canEdit(householdId);
     }
   }
 }

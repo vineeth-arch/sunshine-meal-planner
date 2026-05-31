@@ -4,12 +4,16 @@ import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { canEdit } from '../auth/access'
+import { useAuth } from '../auth/use-auth'
 
 export function PantryScreen() {
   const { state, runFridgePlan, suggestFromIngredients } = useLocalKitchen()
+  const { profile } = useAuth()
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
   const [includeGujarati, setIncludeGujarati] = useState(true)
   const [resultMessage, setResultMessage] = useState<string | null>(null)
+  const allowEdit = canEdit(profile)
 
   const makeable = useMemo(
     () => suggestFromIngredients(selectedIngredients).filter((dish) => includeGujarati || dish.category !== 'gujarati'),
@@ -30,6 +34,7 @@ export function PantryScreen() {
           <button
             type="button"
             className="mk-button mk-button-primary mk-button-pad-sm"
+            disabled={!allowEdit}
             onClick={() => {
               const result = runFridgePlan(selectedIngredients, includeGujarati)
               setResultMessage(
@@ -42,6 +47,7 @@ export function PantryScreen() {
             Generate plan
           </button>
         </div>
+        {!allowEdit ? <p className="mk-meta">Viewer access is read-only. Pantry suggestions still work, but plan generation is disabled.</p> : null}
 
         <label className="mk-check-card">
           <input type="checkbox" checked={includeGujarati} onChange={(event) => setIncludeGujarati(event.target.checked)} />

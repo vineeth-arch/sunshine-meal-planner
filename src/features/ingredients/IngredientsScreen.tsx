@@ -4,6 +4,8 @@ import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { canEdit } from '../auth/access'
+import { useAuth } from '../auth/use-auth'
 import type { Ingredient } from '../../types/domain'
 
 type DraftIngredient = Ingredient & { previousName?: string; removeLocalImage?: boolean }
@@ -20,9 +22,11 @@ function emptyIngredient(): DraftIngredient {
 
 export function IngredientsScreen() {
   const { state, saveIngredient, deleteIngredient, addStaple, removeStaple } = useLocalKitchen()
+  const { profile } = useAuth()
   const [draft, setDraft] = useState<DraftIngredient | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [newStaple, setNewStaple] = useState('')
+  const allowEdit = canEdit(profile)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -42,9 +46,13 @@ export function IngredientsScreen() {
 
       <PanelCard className="mk-stack-sm">
         <div className="mk-inline-actions">
-          <button type="button" className="mk-button mk-button-primary mk-button-pad" onClick={() => setDraft(emptyIngredient())}>
-            Add ingredient
-          </button>
+          {allowEdit ? (
+            <button type="button" className="mk-button mk-button-primary mk-button-pad" onClick={() => setDraft(emptyIngredient())}>
+              Add ingredient
+            </button>
+          ) : (
+            <p className="mk-meta">Viewer access is read-only. Ingredient and staple changes are disabled.</p>
+          )}
         </div>
         <div className="mk-stack-sm">
           <h3 className="mk-subtitle">Staples</h3>
@@ -52,25 +60,29 @@ export function IngredientsScreen() {
             {state.staples.map((staple) => (
               <span key={staple} className="mk-chip mk-chip-soft">
                 {staple}
-                <button type="button" className="mk-inline-link" onClick={() => removeStaple(staple)}>
-                  remove
-                </button>
+                {allowEdit ? (
+                  <button type="button" className="mk-inline-link" onClick={() => removeStaple(staple)}>
+                    remove
+                  </button>
+                ) : null}
               </span>
             ))}
           </div>
-          <div className="mk-inline-actions">
-            <input className="mk-input" value={newStaple} onChange={(event) => setNewStaple(event.target.value)} placeholder="Add staple" />
-            <button
-              type="button"
-              className="mk-button mk-button-secondary mk-button-pad-sm"
-              onClick={() => {
-                addStaple(newStaple)
-                setNewStaple('')
-              }}
-            >
-              Add staple
-            </button>
-          </div>
+          {allowEdit ? (
+            <div className="mk-inline-actions">
+              <input className="mk-input" value={newStaple} onChange={(event) => setNewStaple(event.target.value)} placeholder="Add staple" />
+              <button
+                type="button"
+                className="mk-button mk-button-secondary mk-button-pad-sm"
+                onClick={() => {
+                  addStaple(newStaple)
+                  setNewStaple('')
+                }}
+              >
+                Add staple
+              </button>
+            </div>
+          ) : null}
         </div>
       </PanelCard>
 
@@ -91,25 +103,27 @@ export function IngredientsScreen() {
                 <p className="mk-meta">{[ingredient.malayalam, ingredient.gujarati].filter(Boolean).join(' · ') || 'No translations yet'}</p>
               </div>
             </div>
-            <div className="mk-inline-actions">
-              <button
-                type="button"
-                className="mk-button mk-button-primary mk-button-pad-sm"
-                onClick={() => setDraft({ ...ingredient, previousName: ingredient.name })}
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                className="mk-button mk-button-danger mk-button-pad-sm"
-                onClick={async () => {
-                  if (!window.confirm(`Delete ${ingredient.name}?`)) return
-                  await deleteIngredient(ingredient.name)
-                }}
-              >
-                Delete
-              </button>
-            </div>
+            {allowEdit ? (
+              <div className="mk-inline-actions">
+                <button
+                  type="button"
+                  className="mk-button mk-button-primary mk-button-pad-sm"
+                  onClick={() => setDraft({ ...ingredient, previousName: ingredient.name })}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="mk-button mk-button-danger mk-button-pad-sm"
+                  onClick={async () => {
+                    if (!window.confirm(`Delete ${ingredient.name}?`)) return
+                    await deleteIngredient(ingredient.name)
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null}
           </PanelCard>
         ))}
       </div>
