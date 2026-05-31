@@ -1,0 +1,2513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F5E642">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Kitchen">
+  <link rel="manifest" href="/manifest.json">
+  <title>Mom's Kitchen — weekly meal planner</title>
+  <meta name="description" content="Plan the week's breakfast, lunch and dinner — Kerala sabjis and curries with a separate Gujarati sabji for the family.">
+  <meta property="og:title" content="Mom's Kitchen">
+  <meta property="og:description" content="A warm weekly meal planner for Kerala and Gujarati home cooking.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231A4731'/><text y='24' x='16' text-anchor='middle' font-size='20'>%F0%9F%8D%9B</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'Arial', 'sans-serif'],
+            display: ['Syne', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            cream: '#F5F5C8',
+            'green-accent': '#1A4731',
+            'green-dark': '#1A4731',
+            'green-house': '#1A4731',
+            'green-light': '#C8F5D0',
+            'cta-yellow': '#F5E642',
+            'accent-green': '#3CB371',
+            'chip-curry': '#FFF59D',
+            'chip-gujarati': '#C8F5D0',
+            'muted': '#4A5E50',
+          },
+          borderRadius: { pill: '50px' },
+          boxShadow: {
+            card: '4px 4px 0 #1A4731',
+            nav: '0 -2px 0 #1A4731',
+          },
+          letterSpacing: { tight: '-0.01em' },
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #F5F5C8;
+      --green: #1A4731;
+      --yellow: #F5E642;
+      --muted: #4A5E50;
+      --accent: #3CB371;
+      --white: #FFFFFF;
+      --shadow-sm: 3px 3px 0 var(--green);
+      --shadow-md: 4px 4px 0 var(--green);
+      --shadow-lg: 6px 6px 0 var(--green);
+    }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    html, body { overscroll-behavior: none; background: var(--bg); }
+    body { font-family: 'DM Sans', Arial, sans-serif; letter-spacing: -0.01em; }
+    h1, h2, h3 { font-family: 'Syne', Arial, sans-serif; text-wrap: balance; }
+    p { text-wrap: pretty; }
+    .tabular { font-variant-numeric: tabular-nums; }
+    .overflow-y-auto { -webkit-overflow-scrolling: touch; }
+
+    /* ── Staple chip ── */
+    .staple-chip {
+      display: inline-flex; align-items: center; height: 36px;
+      padding: 0 14px; background: #FFF59D; border: 1.5px solid var(--green);
+      border-radius: 50px; font-size: 13px; color: var(--green); font-weight: 600;
+    }
+
+    /* ── Cards ── */
+    .tx-card {
+      background: var(--white); border: 2px solid var(--green);
+      border-radius: 20px; box-shadow: var(--shadow-md);
+    }
+    .tx-card-dark {
+      background: var(--green); border: 2px solid var(--green);
+      border-radius: 20px; box-shadow: var(--shadow-md);
+    }
+    .tx-title { font-family: 'Syne', Arial, sans-serif; color: var(--green); }
+    .tx-copy { color: var(--muted); }
+    .tx-muted { color: var(--muted); }
+    .tx-empty { color: var(--muted); text-align: center; }
+    .tx-panel-label {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    }
+    .tx-overlay-header,
+    .tx-overlay-subhead,
+    .tx-overlay-footer {
+      background: var(--white);
+    }
+    .tx-overlay-header,
+    .tx-overlay-subhead {
+      border-bottom: 2px solid var(--green);
+    }
+    .tx-overlay-footer {
+      border-top: 2px solid var(--green);
+    }
+    .tx-close-btn {
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 1.5rem;
+    }
+    .tx-outline-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--white); color: var(--green); font-weight: 700;
+      border: 2px solid var(--green); border-radius: 9999px;
+      box-shadow: var(--shadow-sm); transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .tx-outline-btn:active { transform: scale(0.97); box-shadow: 1px 1px 0 var(--green); }
+    .tx-danger-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--white); color: #9a3c2d; font-weight: 700;
+      border: 2px solid #9a3c2d; border-radius: 9999px;
+      box-shadow: 3px 3px 0 #9a3c2d; transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .tx-danger-btn:active { transform: scale(0.97); box-shadow: 1px 1px 0 #9a3c2d; }
+    .tx-input, .tx-textarea, .tx-select {
+      width: 100%; border: 2px solid var(--green); border-radius: 12px;
+      padding: 0.7rem 0.85rem; font-size: 0.95rem; outline: none;
+      background: var(--white); color: var(--green); box-shadow: var(--shadow-sm);
+    }
+    .tx-textarea { resize: vertical; }
+    .tx-input::placeholder, .tx-textarea::placeholder { color: var(--muted); }
+    .tx-input:focus, .tx-textarea:focus, .tx-select:focus { transform: translate(-1px, -1px); box-shadow: var(--shadow-md); }
+    .tx-check-card {
+      background: var(--white); border: 1.5px solid var(--green); border-radius: 12px;
+      box-shadow: 2px 2px 0 var(--green);
+    }
+    .tx-soft-fill { background: #fbf9dc; }
+    .tx-image-well {
+      background: #fffbe9; border: 2px solid var(--green); border-radius: 16px; box-shadow: var(--shadow-sm);
+    }
+    .text-gray-800, .text-gray-700 { color: var(--green) !important; }
+    .text-gray-500, .text-gray-400, .text-gray-300, .text-gray-600 { color: var(--muted) !important; }
+    .bg-gray-50, .bg-gray-100 { background: #fffbe9 !important; }
+    .border-gray-200, .border-gray-100 { border-color: var(--green) !important; }
+    .focus\:border-green-accent:focus { border-color: var(--green) !important; box-shadow: var(--shadow-sm); }
+
+    /* ── Primary CTA button ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--yellow); color: var(--green); font-weight: 700;
+      border: 2px solid var(--green); border-radius: 50px;
+      box-shadow: var(--shadow-md); transition: transform 0.1s, box-shadow 0.1s;
+      font-family: 'DM Sans', Arial, sans-serif;
+    }
+    .btn-primary:active { transform: scale(0.97); box-shadow: 2px 2px 0 var(--green); }
+    @media (hover: hover) {
+      .btn-primary:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .btn-primary { transition: none; }
+      .btn-primary:hover { transform: none; }
+    }
+
+    /* ── Secondary button ── */
+    .btn-secondary {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; color: var(--green); font-weight: 600;
+      border: 2px solid var(--green); border-radius: 50px;
+      transition: background 0.1s;
+    }
+    .btn-secondary:active { background: #F5F5C8; }
+
+    /* ── Chips / tags ── */
+    .chip-sabji   { background: #FFF59D; border: 1.5px solid var(--green); border-radius: 8px; color: var(--green); font-size: 12px; font-weight: 600; padding: 2px 8px; }
+    .chip-curry   { background: #FFF59D; border: 1.5px solid var(--green); border-radius: 8px; color: var(--green); font-size: 12px; font-weight: 600; padding: 2px 8px; }
+    .chip-gujarati{ background: #C8F5D0; border: 1.5px solid var(--green); border-radius: 8px; color: var(--green); font-size: 12px; font-weight: 600; padding: 2px 8px; }
+
+    /* ── Tab nav ── */
+    .tab-btn.active { color: var(--green); }
+    .tab-btn.active .tab-icon { background: var(--yellow); }
+    .tab-btn { color: var(--muted); }
+    input[type=checkbox] { accent-color: var(--green); }
+
+    /* ── Focus ring ── */
+    :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 6px; }
+    button:focus:not(:focus-visible) { outline: none; }
+
+    /* ── Hover affordances ── */
+    @media (hover: hover) {
+      .sabji-pick-card:hover,
+      .week-day-row:hover,
+      .ingredient-card:hover,
+      .tx-outline-btn:hover,
+      .tx-danger-btn:hover {
+        transform: translate(-2px,-2px); box-shadow: var(--shadow-lg);
+      }
+      .add-sabji-btn:hover, .add-gujarati-btn:hover { background: rgba(245,230,66,0.15); }
+      #admin-btn:hover { border-color: var(--green); color: var(--green); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sabji-pick-card, .week-day-row { transition: none; }
+    }
+
+    /* ── Animations ── */
+    .overlay-enter { animation: slideUp 0.22s cubic-bezier(0.32,0.72,0,1); }
+    @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .toast { animation: fadeInOut 2.8s ease forwards; }
+    @keyframes fadeInOut {
+      0%  { opacity: 0; transform: translateY(8px); }
+      12% { opacity: 1; transform: translateY(0); }
+      75% { opacity: 1; }
+      100%{ opacity: 0; }
+    }
+
+    /* ── Overlay root — opaque bg (Tailwind CDN won't reliably style injected nodes) ── */
+    .tx-overlay { background-color: #F5F5C8; }
+
+    /* ── Safe area ── */
+    #bottom-nav { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .pb-nav { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  </style>
+</head>
+<body class="bg-cream min-h-[100dvh]">
+
+<div id="app" class="max-w-[430px] mx-auto relative min-h-[100dvh]">
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-20 bg-cream px-4 pt-5 pb-3 flex items-start justify-between" style="border-bottom:2px solid #1A4731">
+    <div>
+      <h1 class="text-2xl font-black text-green-accent" style="font-family:'Syne',Arial,sans-serif;letter-spacing:-0.03em">Mom's Kitchen</h1>
+      <p id="header-date" class="text-xs mt-0.5 font-medium" style="color:#4A5E50"></p>
+    </div>
+    <button id="admin-btn"
+      class="flex items-center gap-1.5 text-xs font-semibold mt-1 px-3 py-2 rounded-pill border-2 active:scale-95 transition-transform"
+      style="border-color:#1A4731;color:#1A4731">
+      ⚙️ Manage
+    </button>
+  </header>
+
+  <!-- PWA INSTALL BANNER (hidden by default) -->
+  <div id="install-banner" class="hidden mx-4 mb-2 rounded-[16px] px-4 py-3 flex items-center gap-3" style="background:#1A4731;border:2px solid #1A4731;box-shadow:4px 4px 0 #0d2b1c">
+    <span class="text-2xl">📲</span>
+    <div class="flex-1">
+      <p class="text-sm font-bold" style="font-family:'Syne',sans-serif;color:#F5E642">Install on your phone</p>
+      <p class="text-xs mt-0.5" style="color:#C8F5D0">Add to Home Screen for quick access</p>
+    </div>
+    <button id="install-btn" class="btn-primary text-xs px-3 py-1.5">Install</button>
+    <button id="install-dismiss" class="ml-1 text-lg" style="color:#C8F5D0">✕</button>
+  </div>
+
+  <!-- TAB PANELS -->
+  <main id="tab-today" class="tab-panel pb-nav"></main>
+  <main id="tab-tomorrow" class="tab-panel pb-nav hidden"></main>
+  <main id="tab-week" class="tab-panel pb-nav hidden"></main>
+  <main id="tab-ingredients" class="tab-panel pb-nav hidden"></main>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav"
+    class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-20 bg-cream"
+    style="border-top:2px solid #1A4731;box-shadow:0 -4px 0 #1A4731">
+    <div class="flex">
+      <button data-tab="today" class="tab-btn active flex-1 flex flex-col items-center pt-3 pb-2 gap-0.5 text-[10px] font-bold text-green-accent">
+        <span class="tab-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg" style="background:#F5E642">📅</span>
+        Today
+      </button>
+      <button data-tab="tomorrow" class="tab-btn flex-1 flex flex-col items-center pt-3 pb-2 gap-0.5 text-[10px] font-bold text-muted">
+        <span class="tab-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg">🌅</span>
+        Tomorrow
+      </button>
+      <button data-tab="week" class="tab-btn flex-1 flex flex-col items-center pt-3 pb-2 gap-0.5 text-[10px] font-bold text-muted">
+        <span class="tab-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg">📋</span>
+        Week
+      </button>
+      <button data-tab="ingredients" class="tab-btn flex-1 flex flex-col items-center pt-3 pb-2 gap-0.5 text-[10px] font-bold text-muted">
+        <span class="tab-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg">🧺</span>
+        Pantry
+      </button>
+    </div>
+  </nav>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[380px] pointer-events-none"></div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════
+   CONSTANTS & DEFAULTS
+═══════════════════════════════════════════════ */
+const STORAGE_KEY_REPO        = 'moms_sabji_repo';
+const STORAGE_KEY_PLAN        = 'moms_weekly_plan';
+const STORAGE_KEY_STAPLES     = 'moms_staples';
+const STORAGE_KEY_LASTWEEK    = 'moms_last_week_plan';
+const STORAGE_KEY_INGREDIENTS = 'moms_ingredients';
+const STORAGE_KEY_INTEGRATIONS = 'moms_integrations';
+const DB_NAME = 'sabji-planner-db';
+const DB_VERSION = 2;
+const STORE_IMAGES = 'sabji-images';
+const STORE_INGREDIENT_IMAGES = 'ingredient-images';
+
+const INGREDIENT_EMOJI_MAP = {
+  'drumstick':'🌿','raw banana':'🍌','yam':'🍠','beans':'🫘','carrot':'🥕',
+  'raw mango':'🥭','green beans':'🫘','cabbage':'🥬','pumpkin':'🎃',
+  'cowpeas':'🫘','ash gourd':'🥒','coconut milk':'🥥','bitter gourd':'🥗',
+  'yogurt':'🫙','toor dal':'🫘','shallots':'🧅','tomato':'🍅',
+  'moong dal':'🫘','coconut':'🥥','pepper':'🌶️','eggplant':'🍆',
+  'potato':'🥔','jaggery':'🍯','bottle gourd':'🥬','chana dal':'🫘',
+  'green chili':'🌶️','flat beans':'🫛',
+};
+
+const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const DAY_LABELS = { monday:'Mon', tuesday:'Tue', wednesday:'Wed', thursday:'Thu', friday:'Fri', saturday:'Sat', sunday:'Sun' };
+const DAY_FULL = { monday:'Monday', tuesday:'Tuesday', wednesday:'Wednesday', thursday:'Thursday', friday:'Friday', saturday:'Saturday', sunday:'Sunday' };
+
+const DEFAULT_STAPLES = [
+  'salt','turmeric','chili powder','oil','coconut oil','curry leaves',
+  'mustard seeds','cumin seeds','ginger','garlic','tamarind',
+  'dried red chilies','coconut (grated)','ghee','asafoetida'
+];
+
+const DEFAULT_SABJI_REPO = [
+  // Kerala Sabjis
+  { id:'avial', name:'Avial', category:'sabji',
+    mainIngredients:['drumstick','raw banana','yam','beans','carrot','raw mango'],
+    emoji:'🥗', bgColor:'#D4EDDA',
+    referenceText:'Mixed vegetables in coconut and yogurt. Palakkad essential.' },
+  { id:'beans-thoran', name:'Beans Thoran', category:'sabji',
+    mainIngredients:['green beans'],
+    emoji:'🫘', bgColor:'#D4EDDA',
+    referenceText:'Dry stir-fry with grated coconut and curry leaves.' },
+  { id:'cabbage-thoran', name:'Cabbage Thoran', category:'sabji',
+    mainIngredients:['cabbage'],
+    emoji:'🥬', bgColor:'#D4EDDA',
+    referenceText:'Quick dry sabji, goes with rice and dal.' },
+  { id:'erissery', name:'Erissery', category:'sabji',
+    mainIngredients:['pumpkin','cowpeas'],
+    emoji:'🎃', bgColor:'#FFF3CD',
+    referenceText:'Pumpkin and cowpeas with roasted coconut. Classic Kerala.' },
+  { id:'olan', name:'Olan', category:'sabji',
+    mainIngredients:['ash gourd','cowpeas','coconut milk'],
+    emoji:'🥒', bgColor:'#E8F5E9',
+    referenceText:'Subtle ash gourd and cowpeas in thin coconut milk.' },
+  { id:'mezhukkupuratti', name:'Mezhukkupuratti', category:'sabji',
+    mainIngredients:['raw banana','bitter gourd'],
+    emoji:'🍌', bgColor:'#FFF9C4',
+    referenceText:'Simple dry stir-fry with shallots and coconut oil.' },
+  { id:'kaalan', name:'Kaalan', category:'sabji',
+    mainIngredients:['raw banana','yam','yogurt'],
+    emoji:'🫙', bgColor:'#FFF3CD',
+    referenceText:'Raw banana and yam in thick coconut-curd gravy.' },
+  // Kerala Curries
+  { id:'sambar', name:'Sambar', category:'curry',
+    mainIngredients:['toor dal','drumstick','shallots','tomato'],
+    emoji:'🍲', bgColor:'#FFE0B2',
+    referenceText:'Daily staple. Palakkad sambar uses more shallots than tomato.' },
+  { id:'parippu-curry', name:'Parippu Curry', category:'curry',
+    mainIngredients:['moong dal','coconut'],
+    emoji:'🫘', bgColor:'#FFF9C4',
+    referenceText:'Simple moong dal with coconut paste and ghee tempering.' },
+  { id:'rasam', name:'Rasam', category:'curry',
+    mainIngredients:['tomato','pepper'],
+    emoji:'🍵', bgColor:'#FFCCBC',
+    referenceText:'Thin digestive broth with tomato, pepper and tamarind.' },
+  { id:'pulissery', name:'Pulissery', category:'curry',
+    mainIngredients:['raw mango','yogurt','coconut'],
+    emoji:'🥭', bgColor:'#FFF9C4',
+    referenceText:'Moru curry with raw mango. Goes with rice.' },
+  // Gujarati Sabjis
+  { id:'ringan-bateta', name:'Ringan Bateta', category:'gujarati',
+    mainIngredients:['eggplant','potato','tomato','jaggery'],
+    emoji:'🍆', bgColor:'#E2D9F3',
+    referenceText:'Gujarati-style sweet-spicy brinjal and potato.' },
+  { id:'dudhi-chana', name:'Dudhi Chana', category:'gujarati',
+    mainIngredients:['bottle gourd','chana dal','tomato','jaggery'],
+    emoji:'🥬', bgColor:'#D4EDDA',
+    referenceText:'Bottle gourd and split chickpea sabji, light and nutritious.' },
+  { id:'batata-shaak', name:'Batata nu Shaak', category:'gujarati',
+    mainIngredients:['potato','tomato','green chili'],
+    emoji:'🥔', bgColor:'#FFF9C4',
+    referenceText:'Dry everyday potato sabji, quick to make.' },
+  { id:'valor-papdi', name:'Valor Papdi', category:'gujarati',
+    mainIngredients:['flat beans','potato','jaggery'],
+    emoji:'🫛', bgColor:'#D4EDDA',
+    referenceText:'Flat beans and potato in sweet-spicy Gujarati masala.' },
+];
+
+/* ═══════════════════════════════════════════════
+   INDEXEDDB — IMAGE STORAGE
+═══════════════════════════════════════════════ */
+let _db = null;
+
+function initImageDB() {
+  return new Promise((resolve, reject) => {
+    if (_db) { resolve(_db); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_IMAGES)) {
+        db.createObjectStore(STORE_IMAGES, { keyPath: 'sabjiId' });
+      }
+      if (!db.objectStoreNames.contains(STORE_INGREDIENT_IMAGES)) {
+        db.createObjectStore(STORE_INGREDIENT_IMAGES, { keyPath: 'name' });
+      }
+    };
+    req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+    req.onerror = () => { console.warn('IndexedDB unavailable'); resolve(null); };
+  });
+}
+
+function saveImageBlob(sabjiId, blob) {
+  return new Promise((resolve, reject) => {
+    if (!_db) { reject(new Error('DB not available')); return; }
+    const tx = _db.transaction(STORE_IMAGES, 'readwrite');
+    tx.objectStore(STORE_IMAGES).put({ sabjiId, blob });
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+function getImageBlob(sabjiId) {
+  return new Promise((resolve) => {
+    if (!_db) { resolve(null); return; }
+    const tx = _db.transaction(STORE_IMAGES, 'readonly');
+    const req = tx.objectStore(STORE_IMAGES).get(sabjiId);
+    req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+function deleteImageBlob(sabjiId) {
+  return new Promise((resolve) => {
+    if (!_db) { resolve(); return; }
+    const tx = _db.transaction(STORE_IMAGES, 'readwrite');
+    tx.objectStore(STORE_IMAGES).delete(sabjiId);
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+function saveIngredientImage(name, blob) {
+  return new Promise((resolve, reject) => {
+    if (!_db) { reject(new Error('DB not available')); return; }
+    const tx = _db.transaction(STORE_INGREDIENT_IMAGES, 'readwrite');
+    tx.objectStore(STORE_INGREDIENT_IMAGES).put({ name, blob });
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+function getIngredientImage(name) {
+  return new Promise((resolve) => {
+    if (!_db) { resolve(null); return; }
+    const tx = _db.transaction(STORE_INGREDIENT_IMAGES, 'readonly');
+    const req = tx.objectStore(STORE_INGREDIENT_IMAGES).get(name);
+    req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+function deleteIngredientImage(name) {
+  return new Promise((resolve) => {
+    if (!_db) { resolve(); return; }
+    const tx = _db.transaction(STORE_INGREDIENT_IMAGES, 'readwrite');
+    tx.objectStore(STORE_INGREDIENT_IMAGES).delete(name);
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   IMAGE COMPRESSION
+═══════════════════════════════════════════════ */
+async function compressImage(file, maxPx = 800, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxPx || height > maxPx) {
+        if (width > height) { height = Math.round(height * maxPx / width); width = maxPx; }
+        else { width = Math.round(width * maxPx / height); height = maxPx; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(blob => {
+        if (!blob) { reject(new Error('Compression failed')); return; }
+        if (blob.size > 900_000 && quality > 0.4) {
+          canvas.toBlob(b2 => resolve(b2 || blob), 'image/jpeg', 0.5);
+        } else {
+          resolve(blob);
+        }
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   LOCALSTORAGE — SABJI REPO
+═══════════════════════════════════════════════ */
+function loadSabjiRepo() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_REPO);
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function saveSabjiRepo(repo) {
+  try { localStorage.setItem(STORAGE_KEY_REPO, JSON.stringify(repo)); }
+  catch (e) { showToast('Storage full. Cannot save changes.', 'error'); }
+}
+
+function getSabjiById(id) {
+  return (loadSabjiRepo() || []).find(s => s.id === id) || null;
+}
+
+function seedRepoIfNeeded() {
+  if (!loadSabjiRepo()) saveSabjiRepo(DEFAULT_SABJI_REPO);
+}
+
+/* ═══════════════════════════════════════════════
+   LOCALSTORAGE — STAPLES
+═══════════════════════════════════════════════ */
+function loadStaples() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_STAPLES);
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function saveStaples(list) {
+  try { localStorage.setItem(STORAGE_KEY_STAPLES, JSON.stringify(list)); }
+  catch { showToast('Storage full.', 'error'); }
+}
+
+function getStaplesSet() {
+  const list = loadStaples() || DEFAULT_STAPLES;
+  return new Set(list.map(s => s.toLowerCase()));
+}
+
+function seedStaplesIfNeeded() {
+  if (!loadStaples()) saveStaples(DEFAULT_STAPLES);
+}
+
+/* ═══════════════════════════════════════════════
+   LOCALSTORAGE — INGREDIENTS
+═══════════════════════════════════════════════ */
+function loadIngredients() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_INGREDIENTS);
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function saveIngredients(list) {
+  try { localStorage.setItem(STORAGE_KEY_INGREDIENTS, JSON.stringify(list)); }
+  catch { showToast('Storage full.', 'error'); }
+}
+
+function seedIngredientsIfNeeded() {
+  if (loadIngredients()) return;
+  const repo = loadSabjiRepo() || DEFAULT_SABJI_REPO;
+  const staples = getStaplesSet();
+  const seen = new Set();
+  const list = [];
+  repo.forEach(s => {
+    s.mainIngredients.forEach(ing => {
+      const key = ing.toLowerCase();
+      if (!seen.has(key) && !staples.has(key)) {
+        seen.add(key);
+        list.push({ name: ing, emoji: INGREDIENT_EMOJI_MAP[key] || '🥗' });
+      }
+    });
+  });
+  list.sort((a, b) => a.name.localeCompare(b.name));
+  saveIngredients(list);
+}
+
+function syncIngredientsFromRepo() {
+  const repo = loadSabjiRepo() || [];
+  const staples = getStaplesSet();
+  const current = loadIngredients() || [];
+  const existingNames = new Set(current.map(i => i.name.toLowerCase()));
+  let added = false;
+  repo.forEach(s => {
+    s.mainIngredients.forEach(ing => {
+      const key = ing.toLowerCase();
+      if (!existingNames.has(key) && !staples.has(key)) {
+        existingNames.add(key);
+        current.push({ name: ing, emoji: INGREDIENT_EMOJI_MAP[key] || '🥗' });
+        added = true;
+      }
+    });
+  });
+  if (added) {
+    current.sort((a, b) => a.name.localeCompare(b.name));
+    saveIngredients(current);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   LOCALSTORAGE — WEEKLY PLAN
+═══════════════════════════════════════════════ */
+function getWeekStartDate() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(new Date(d).setDate(diff)).toISOString().split('T')[0];
+}
+
+function getTodayKey() {
+  return ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][new Date().getDay()];
+}
+
+function getTomorrowKey() {
+  const d = new Date(); d.setDate(d.getDate() + 1);
+  return ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][d.getDay()];
+}
+
+function emptyDayPlan() {
+  return {
+    breakfast: { sabjis: [] },
+    lunch:     { curry: '', sabji: '', gujaratiSabji: '' },
+    dinner:    { curry: '', sabjis: [], gujaratiSabji: '' }
+  };
+}
+
+function isEmptyDayPlan(plan) {
+  if (!plan) return true;
+  const b = plan.breakfast?.sabjis?.length > 0;
+  const l = plan.lunch?.curry || plan.lunch?.sabji;
+  const d = plan.dinner?.curry || plan.dinner?.sabjis?.length > 0;
+  return !b && !l && !d;
+}
+
+function loadWeeklyPlan() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_PLAN);
+    if (!s) return null;
+    const plan = JSON.parse(s);
+    // Week rollover detection
+    const currentWeekStart = getWeekStartDate();
+    if (plan.weekStartingDate && plan.weekStartingDate !== currentWeekStart) {
+      // Save as last week before resetting
+      try { localStorage.setItem(STORAGE_KEY_LASTWEEK, JSON.stringify(plan)); } catch {}
+      const fresh = { weekStartingDate: currentWeekStart, days: {} };
+      DAYS.forEach(d => { fresh.days[d] = emptyDayPlan(); });
+      saveWeeklyPlan(fresh);
+      return fresh;
+    }
+    return plan;
+  } catch { return null; }
+}
+
+function saveWeeklyPlan(plan) {
+  try { localStorage.setItem(STORAGE_KEY_PLAN, JSON.stringify(plan)); }
+  catch { showToast('Storage full. Plan not saved.', 'error'); }
+}
+
+function seedPlanIfNeeded() {
+  const existing = loadWeeklyPlan();
+  if (!existing) {
+    const plan = { weekStartingDate: getWeekStartDate(), days: {} };
+    DAYS.forEach(d => { plan.days[d] = emptyDayPlan(); });
+    saveWeeklyPlan(plan);
+  }
+}
+
+function getDayPlan(dayKey) {
+  const plan = loadWeeklyPlan();
+  return (plan?.days?.[dayKey]) || emptyDayPlan();
+}
+
+function updateMealSlot(dayKey, meal, field, value) {
+  const plan = loadWeeklyPlan() || { weekStartingDate: getWeekStartDate(), days: {} };
+  if (!plan.days[dayKey]) plan.days[dayKey] = emptyDayPlan();
+  plan.days[dayKey][meal][field] = value;
+  saveWeeklyPlan(plan);
+}
+
+function copyDayPlan(fromKey, toKey) {
+  const plan = loadWeeklyPlan() || { weekStartingDate: getWeekStartDate(), days: {} };
+  plan.days[toKey] = JSON.parse(JSON.stringify(plan.days[fromKey] || emptyDayPlan()));
+  saveWeeklyPlan(plan);
+}
+
+/* ═══════════════════════════════════════════════
+   OVERLAY UTILITIES
+═══════════════════════════════════════════════ */
+function removeOverlay(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const colors = {
+    info: 'bg-green-house text-white',
+    error: 'text-white',
+    success: 'bg-green-accent text-white'
+  };
+  const div = document.createElement('div');
+  div.className = `toast pointer-events-none w-full text-sm font-medium px-4 py-3 rounded-[12px] mb-2 ${colors[type] || colors.info}`;
+  if (type === 'error') {
+    div.style.background = '#9a3c2d';
+    div.style.border = '2px solid #7e2d20';
+    div.style.boxShadow = '4px 4px 0 #7e2d20';
+  } else {
+    div.style.border = '2px solid #1A4731';
+    div.style.boxShadow = '4px 4px 0 #1A4731';
+  }
+  div.textContent = msg;
+  container.appendChild(div);
+  setTimeout(() => div.remove(), 3000);
+}
+
+function refreshCurrentTab() {
+  const activeBtn = document.querySelector('.tab-btn.active');
+  if (activeBtn) activeBtn.click();
+}
+
+/* ═══════════════════════════════════════════════
+   ASYNC IMAGE LOADING — populates placeholders
+═══════════════════════════════════════════════ */
+/* Resolve one image cell: URL field → IndexedDB blob → leave emoji.
+   Reads data-img-url (hosted URL), data-img-id (dish blob key), data-ing-img (ingredient blob key). */
+async function resolveImageEl(el) {
+  const url = el.dataset.imgUrl;
+  if (url) {
+    el.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-[8px]" alt="" referrerpolicy="no-referrer">`;
+    return;
+  }
+  let blob = null;
+  if (el.dataset.ingImg) blob = await getIngredientImage(el.dataset.ingImg);
+  else if (el.dataset.imgId) blob = await getImageBlob(el.dataset.imgId);
+  if (blob) {
+    const u = URL.createObjectURL(blob);
+    el.innerHTML = `<img src="${u}" class="w-full h-full object-cover rounded-[8px]" alt="">`;
+  }
+}
+
+async function resolveImagesIn(container) {
+  for (const el of container.querySelectorAll('[data-img-url],[data-img-id],[data-ing-img]')) {
+    await resolveImageEl(el);
+  }
+}
+
+// Back-compat wrappers (callers unchanged)
+async function loadImagesIntoGrid(container) { await resolveImagesIn(container); }
+
+async function loadImageIntoThumb(el, sabjiId) {
+  const s = getSabjiById(sabjiId);
+  if (s?.image) el.dataset.imgUrl = s.image;
+  else el.dataset.imgId = sabjiId;
+  await resolveImageEl(el);
+}
+
+/* ═══════════════════════════════════════════════
+   INTEGRATIONS — LLM + image host config
+═══════════════════════════════════════════════ */
+function loadIntegrations() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_INTEGRATIONS)) || {}; }
+  catch { return {}; }
+}
+function saveIntegrations(cfg) {
+  try { localStorage.setItem(STORAGE_KEY_INTEGRATIONS, JSON.stringify(cfg)); }
+  catch { showToast('Storage full.', 'error'); }
+}
+
+/* imgbb upload → hosted URL. Returns null if no key configured (caller falls back to local blob). */
+async function uploadToImgbb(file) {
+  const cfg = loadIntegrations();
+  if (!cfg.imgbbKey) return null;
+  const compressed = await compressImage(file, 1024, 0.8);
+  const b64 = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(compressed);
+  });
+  const fd = new FormData();
+  fd.append('image', b64);
+  const resp = await fetch('https://api.imgbb.com/1/upload?key=' + encodeURIComponent(cfg.imgbbKey), { method: 'POST', body: fd });
+  const json = await resp.json();
+  if (!json.success) throw new Error(json.error?.message || 'imgbb upload failed');
+  return json.data.url;
+}
+
+/* LLM auto-fill: returns {malayalam, gujarati} transliterated in English. OpenAI-compatible endpoint. */
+async function callLLMForNames(ingredientName) {
+  const cfg = loadIntegrations();
+  if (!cfg.llmBaseUrl || !cfg.llmKey || !cfg.llmModel)
+    throw new Error('Set LLM config in Settings → Integrations first.');
+  const prompt = `You are a South Indian and Gujarati cooking expert. For the cooking ingredient "${ingredientName}", give its common Malayalam name and Gujarati name, both transliterated in English (Latin letters, no native script). Reply with ONLY valid JSON, no prose: {"malayalam":"...","gujarati":"..."}. If a name is unknown, use an empty string.`;
+  const resp = await fetch(cfg.llmBaseUrl.replace(/\/+$/, '') + '/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.llmKey },
+    body: JSON.stringify({ model: cfg.llmModel, temperature: 0.2, messages: [{ role: 'user', content: prompt }] })
+  });
+  if (!resp.ok) throw new Error('LLM error ' + resp.status);
+  const data = await resp.json();
+  const txt = data.choices?.[0]?.message?.content || '';
+  const m = txt.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('No JSON in LLM reply');
+  const parsed = JSON.parse(m[0]);
+  return { malayalam: (parsed.malayalam || '').trim(), gujarati: (parsed.gujarati || '').trim() };
+}
+
+/* ═══════════════════════════════════════════════
+   PICKER CONTEXT (global)
+═══════════════════════════════════════════════ */
+let _pickerContext = null;
+
+/* ═══════════════════════════════════════════════
+   RENDER MEAL CARDS
+═══════════════════════════════════════════════ */
+function renderSabjiSlot(dayKey, meal, field, arr, index) {
+  const sabjiId = Array.isArray(arr) ? arr[index] : arr;
+  if (sabjiId) {
+    const s = getSabjiById(sabjiId);
+    if (!s) return '';
+    return `
+      <div class="flex items-center gap-1.5 rounded-pill pl-1 pr-2 py-1 min-h-[44px]"
+           style="background:#C8F5D0;border:1.5px solid #1A4731">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-lg overflow-hidden"
+             style="background:${s.bgColor||'#C8F5D0'}" data-img-id="${s.id}" data-img-url="${s.image||''}">
+          ${s.emoji||'🥗'}
+        </div>
+        <span class="text-sm font-semibold leading-tight" style="color:#1A4731">${s.name}</span>
+        <button class="recipe-view-btn text-base flex-shrink-0 py-1" title="Recipe & video"
+          data-sabji-id="${s.id}">📖</button>
+        <button class="change-sabji-btn text-xs underline ml-0.5 flex-shrink-0 py-1" style="color:#4A5E50"
+          data-day="${dayKey}" data-meal="${meal}" data-field="${field}" data-index="${index}">change</button>
+        <button class="missing-ingredient-btn text-base flex-shrink-0 py-1" title="Missing ingredient?"
+          data-sabji-id="${s.id}" data-day="${dayKey}" data-meal="${meal}" data-field="${field}" data-index="${index}">⚠️</button>
+      </div>`;
+  }
+  return `
+    <button class="add-sabji-btn flex items-center gap-1 border-2 border-dashed rounded-pill px-3 py-2 min-h-[44px] text-sm transition-colors"
+      style="border-color:#1A4731;color:#4A5E50"
+      data-day="${dayKey}" data-meal="${meal}" data-field="${field}" data-index="${index}">
+      <span class="text-xl leading-none">+</span> Add Sabji
+    </button>`;
+}
+
+function renderCurrySlot(dayKey, meal, curryId) {
+  if (curryId) {
+    const s = getSabjiById(curryId);
+    if (!s) return '';
+    return `
+      <div class="flex items-center gap-1.5 rounded-pill pl-1 pr-2 py-1 min-h-[44px]"
+           style="background:#FFF59D;border:1.5px solid #1A4731">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-lg overflow-hidden"
+             style="background:${s.bgColor||'#FFF59D'}" data-img-id="${s.id}" data-img-url="${s.image||''}">
+          ${s.emoji||'🍛'}
+        </div>
+        <span class="text-sm font-semibold leading-tight" style="color:#1A4731">${s.name}</span>
+        <button class="recipe-view-btn text-base flex-shrink-0 py-1" title="Recipe & video"
+          data-sabji-id="${s.id}">📖</button>
+        <button class="change-sabji-btn text-xs underline ml-0.5 flex-shrink-0 py-1" style="color:#4A5E50"
+          data-day="${dayKey}" data-meal="${meal}" data-field="curry" data-index="0" data-filter="curry">change</button>
+        <button class="missing-ingredient-btn text-base flex-shrink-0 py-1"
+          data-sabji-id="${s.id}" data-day="${dayKey}" data-meal="${meal}" data-field="curry" data-index="0">⚠️</button>
+      </div>`;
+  }
+  return `
+    <button class="add-sabji-btn flex items-center gap-1 border-2 border-dashed rounded-pill px-3 py-2 min-h-[44px] text-sm transition-colors"
+      style="border-color:#1A4731;color:#4A5E50"
+      data-day="${dayKey}" data-meal="${meal}" data-field="curry" data-index="0" data-filter="curry">
+      <span class="text-xl leading-none">+</span> Add Curry
+    </button>`;
+}
+
+function renderGujaratiSlot(dayKey, meal, gujaratiId) {
+  if (gujaratiId) {
+    const s = getSabjiById(gujaratiId);
+    return `
+      <div class="flex items-center gap-1.5 rounded-pill pl-1 pr-2 py-1 min-h-[44px]"
+           style="background:#C8F5D0;border:1.5px solid #1A4731">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-lg overflow-hidden"
+             style="background:#C8F5D0" data-img-id="${s?.id}" data-img-url="${s?.image||''}">
+          ${s?.emoji||'🫙'}
+        </div>
+        <span class="text-sm font-semibold leading-tight" style="color:#1A4731">${s?.name||'?'}</span>
+        <button class="change-sabji-btn text-xs underline ml-0.5 flex-shrink-0 py-1" style="color:#4A5E50"
+          data-day="${dayKey}" data-meal="${meal}" data-field="gujaratiSabji" data-index="0" data-filter="gujarati">change</button>
+        <button class="remove-gujarati-btn text-xs ml-0.5 flex-shrink-0 py-2 px-1" style="color:#4A5E50"
+          data-day="${dayKey}" data-meal="${meal}">✕</button>
+      </div>`;
+  }
+  return `
+    <button class="add-gujarati-btn flex items-center gap-1 border-2 border-dashed rounded-pill px-3 py-2 min-h-[44px] text-sm transition-colors"
+      style="border-color:#1A4731;color:#4A5E50"
+      data-day="${dayKey}" data-meal="${meal}" data-filter="gujarati">
+      <span>+</span> Gujarati Sabji
+    </button>`;
+}
+
+function renderMealCard(dayKey, meal, mealData) {
+  const icons = { breakfast:'🌅', lunch:'☀️', dinner:'🌙' };
+  const labels = { breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner' };
+  mealData = mealData || emptyDayPlan()[meal];
+
+  let slots = '';
+  if (meal === 'breakfast') {
+    slots = `
+      <span class="staple-chip">🫓 Chapati</span>
+      ${renderSabjiSlot(dayKey, meal, 'sabjis', mealData.sabjis, 0)}
+      ${(mealData.sabjis[0]) ? renderSabjiSlot(dayKey, meal, 'sabjis', mealData.sabjis, 1) : ''}
+    `;
+  } else if (meal === 'lunch') {
+    slots = `
+      <span class="staple-chip">🍚 Rice</span>
+      ${renderCurrySlot(dayKey, meal, mealData.curry)}
+      ${renderSabjiSlot(dayKey, meal, 'sabji', mealData.sabji, 0)}
+      ${renderGujaratiSlot(dayKey, meal, mealData.gujaratiSabji)}
+    `;
+  } else {
+    const sabjis = mealData.sabjis || [];
+    slots = `
+      <span class="staple-chip">🍚 Rice</span>
+      ${renderCurrySlot(dayKey, meal, mealData.curry)}
+      ${renderSabjiSlot(dayKey, meal, 'sabjis', sabjis, 0)}
+      ${sabjis[0] ? renderSabjiSlot(dayKey, meal, 'sabjis', sabjis, 1) : ''}
+      ${renderGujaratiSlot(dayKey, meal, mealData.gujaratiSabji)}
+    `;
+  }
+
+  return `
+    <div class="tx-card p-4 mb-3">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xl">${icons[meal]}</span>
+        <h2 class="text-base font-bold" style="font-family:'Syne',sans-serif;color:#1A4731">${labels[meal]}</h2>
+      </div>
+      <div class="flex flex-wrap gap-2">${slots}</div>
+    </div>`;
+}
+
+function bindMealCardEvents(dayKey, container) {
+  container.addEventListener('click', e => {
+    const addBtn = e.target.closest('.add-sabji-btn');
+    if (addBtn) {
+      const { day, meal, field, index, filter } = addBtn.dataset;
+      _pickerContext = { day, meal, field, index: parseInt(index), filter: filter || null };
+      openSabjiPicker(filter || null);
+      return;
+    }
+    const changeBtn = e.target.closest('.change-sabji-btn');
+    if (changeBtn) {
+      const { day, meal, field, index, filter } = changeBtn.dataset;
+      _pickerContext = { day, meal, field, index: parseInt(index), filter: filter || null };
+      openSabjiPicker(filter || null);
+      return;
+    }
+    const gujaratiBtn = e.target.closest('.add-gujarati-btn');
+    if (gujaratiBtn) {
+      const { day, meal } = gujaratiBtn.dataset;
+      _pickerContext = { day, meal, field: 'gujaratiSabji', index: 0, filter: 'gujarati' };
+      openSabjiPicker('gujarati');
+      return;
+    }
+    const removeGuj = e.target.closest('.remove-gujarati-btn');
+    if (removeGuj) {
+      const { day, meal } = removeGuj.dataset;
+      updateMealSlot(day, meal, 'gujaratiSabji', '');
+      renderDayView(day, container.id === 'tab-today' ? 'tab-today' : 'tab-tomorrow');
+      return;
+    }
+    const missingBtn = e.target.closest('.missing-ingredient-btn');
+    if (missingBtn) {
+      const { sabjiId, day, meal, field, index } = missingBtn.dataset;
+      _pickerContext = { day, meal, field, index: parseInt(index) };
+      openMissingIngredientOverlay(sabjiId);
+      return;
+    }
+    const recipeBtn = e.target.closest('.recipe-view-btn');
+    if (recipeBtn) {
+      openRecipeView(recipeBtn.dataset.sabjiId);
+      return;
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   TODAY VIEW
+═══════════════════════════════════════════════ */
+function renderDayView(dayKey, tabId = 'tab-today') {
+  const container = document.getElementById(tabId);
+  const plan = getDayPlan(dayKey);
+  const isToday = dayKey === getTodayKey();
+  const blank = isEmptyDayPlan(plan);
+  container.innerHTML = `
+    <div class="px-4 pt-1">
+      <div class="flex items-center justify-between mb-3">
+        <p class="tx-panel-label capitalize">${isToday ? "Today's plan" : DAY_FULL[dayKey]}</p>
+        <button class="ing-needed-btn tx-outline-btn px-3 py-1.5 text-xs">🧾 Ingredients</button>
+      </div>
+      ${blank ? `<p class="text-xs tx-copy mb-3 -mt-1">Nothing planned yet. Tap a <span class="font-medium" style="color:#1A4731">+ Add</span> below to start, or use <span class="font-medium" style="color:#1A4731">By Ingredients</span> in the picker.</p>` : ''}
+      ${renderMealCard(dayKey, 'breakfast', plan.breakfast)}
+      ${renderMealCard(dayKey, 'lunch', plan.lunch)}
+      ${renderMealCard(dayKey, 'dinner', plan.dinner)}
+    </div>`;
+  bindMealCardEvents(dayKey, container);
+  loadImagesIntoGrid(container);
+  container.querySelector('.ing-needed-btn').addEventListener('click', () => openIngredientsNeeded(dayKey));
+}
+
+/* ═══════════════════════════════════════════════
+   TOMORROW VIEW
+═══════════════════════════════════════════════ */
+function renderNextDayView() {
+  const container = document.getElementById('tab-tomorrow');
+  const tKey = getTomorrowKey();
+  const todayKey = getTodayKey();
+  const plan = getDayPlan(tKey);
+  const empty = isEmptyDayPlan(plan);
+
+  container.innerHTML = `
+    <div class="px-4 pt-1">
+      <div class="flex items-center justify-between mb-3">
+        <p class="tx-panel-label capitalize">Tomorrow — ${DAY_FULL[tKey]}</p>
+        <div class="flex gap-2">
+          <button id="tomorrow-ing-btn" class="tx-outline-btn px-3 py-1.5 min-h-[36px] text-xs">🧾 Ingredients</button>
+          ${empty
+            ? `<button id="copy-today-btn" class="tx-outline-btn px-3 py-1.5 min-h-[36px] text-xs">Copy Today</button>`
+            : `<button id="clear-tomorrow-btn" class="tx-danger-btn px-3 py-1.5 min-h-[36px] text-xs">Clear</button>`
+          }
+        </div>
+      </div>
+      ${renderMealCard(tKey, 'breakfast', plan.breakfast)}
+      ${renderMealCard(tKey, 'lunch', plan.lunch)}
+      ${renderMealCard(tKey, 'dinner', plan.dinner)}
+    </div>`;
+
+  bindMealCardEvents(tKey, container);
+  loadImagesIntoGrid(container);
+
+  document.getElementById('tomorrow-ing-btn')?.addEventListener('click', () => openIngredientsNeeded(tKey));
+  document.getElementById('copy-today-btn')?.addEventListener('click', () => {
+    copyDayPlan(todayKey, tKey);
+    renderNextDayView();
+    showToast("Copied today's plan to tomorrow!", 'success');
+  });
+  document.getElementById('clear-tomorrow-btn')?.addEventListener('click', () => {
+    updateMealSlot(tKey, 'breakfast', 'sabjis', []);
+    updateMealSlot(tKey, 'lunch', 'curry', '');
+    updateMealSlot(tKey, 'lunch', 'sabji', '');
+    updateMealSlot(tKey, 'lunch', 'gujaratiSabji', '');
+    updateMealSlot(tKey, 'dinner', 'curry', '');
+    updateMealSlot(tKey, 'dinner', 'sabjis', []);
+    updateMealSlot(tKey, 'dinner', 'gujaratiSabji', '');
+    renderNextDayView();
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   WEEK VIEW
+═══════════════════════════════════════════════ */
+function getMealSummary(dayPlan) {
+  if (!dayPlan) return ['—', '—', '—'];
+  const getNames = ids => (ids||[]).map(id => { const s = getSabjiById(id); return s ? s.name : null; }).filter(Boolean);
+  const b = getNames(dayPlan.breakfast?.sabjis);
+  const l = [dayPlan.lunch?.curry, dayPlan.lunch?.sabji].filter(Boolean).map(id => { const s = getSabjiById(id); return s?.name; }).filter(Boolean);
+  const d = [dayPlan.dinner?.curry, ...(dayPlan.dinner?.sabjis||[])].filter(Boolean).map(id => { const s = getSabjiById(id); return s?.name; }).filter(Boolean);
+  return [b.join(', ')||'—', l.join(', ')||'—', d.join(', ')||'—'];
+}
+
+function renderWeekView() {
+  const container = document.getElementById('tab-week');
+  const plan = loadWeeklyPlan() || {};
+  const todayKey = getTodayKey();
+  const hasLastWeek = !!localStorage.getItem(STORAGE_KEY_LASTWEEK);
+
+  container.innerHTML = `
+    <div class="px-4 pt-1">
+      <div class="flex items-center justify-between mb-3">
+        <p class="tx-panel-label">This Week</p>
+        <div class="flex gap-2">
+          ${hasLastWeek ? `<button id="use-lastweek-btn" class="tx-outline-btn px-3 py-1.5 text-xs">Use Last Week</button>` : ''}
+          <button id="shopping-list-btn" class="tx-outline-btn px-3 py-1.5 text-xs">🧾 Ingredients</button>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2.5">
+        ${DAYS.map(day => {
+          const dp = plan.days?.[day] || emptyDayPlan();
+          const [b, l, d] = getMealSummary(dp);
+          const isToday = day === todayKey;
+          return `
+            <div class="week-day-row tx-card p-3 cursor-pointer active:scale-[0.98] transition-transform ${isToday ? 'ring-2 ring-green-accent' : ''}"
+                 data-day="${day}">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-sm font-bold" style="color:${isToday ? '#1A4731' : '#1A4731'};font-family:'Syne',sans-serif">${DAY_FULL[day]}${isToday ? ' · Today' : ''}</span>
+                ${isToday ? '<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#F5E642;color:#1A4731;border:1.5px solid #1A4731">Now</span>' : '<span style="color:#4A5E50" class="text-sm">→</span>'}
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <div class="flex gap-1.5 text-xs tx-copy"><span class="text-base leading-none">🌅</span><span class="truncate">${b}</span></div>
+                <div class="flex gap-1.5 text-xs tx-copy"><span class="text-base leading-none">☀️</span><span class="truncate">${l}</span></div>
+                <div class="flex gap-1.5 text-xs tx-copy"><span class="text-base leading-none">🌙</span><span class="truncate">${d}</span></div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  container.querySelectorAll('.week-day-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const dayKey = row.dataset.day;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('tab-today').classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active','text-green-accent');
+        b.classList.add('text-muted');
+        b.querySelector('.tab-icon').classList.remove('bg-green-light');
+      });
+      const todayBtn = document.querySelector('[data-tab="today"]');
+      todayBtn.classList.add('active','text-green-accent');
+      todayBtn.classList.remove('text-muted');
+      todayBtn.querySelector('.tab-icon').classList.add('bg-green-light');
+      renderDayView(dayKey, 'tab-today');
+    });
+  });
+
+  document.getElementById('shopping-list-btn')?.addEventListener('click', () => openIngredientsNeeded('week'));
+  document.getElementById('use-lastweek-btn')?.addEventListener('click', () => {
+    if (confirm('Replace this week\'s plan with last week\'s?')) {
+      try {
+        const last = JSON.parse(localStorage.getItem(STORAGE_KEY_LASTWEEK));
+        const plan = loadWeeklyPlan() || { weekStartingDate: getWeekStartDate(), days: {} };
+        plan.days = last.days;
+        saveWeeklyPlan(plan);
+        renderWeekView();
+        showToast('Last week\'s plan loaded!', 'success');
+      } catch { showToast('Could not load last week.', 'error'); }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   SABJI GRID RENDERER
+═══════════════════════════════════════════════ */
+function renderSabjiGrid(sabjis) {
+  if (!sabjis.length) return `<div class="col-span-2 tx-empty mt-8 text-sm">No sabjis found.</div>`;
+  return sabjis.map(s => `
+    <button class="sabji-pick-card tx-card p-3 text-left active:scale-95 transition-transform"
+            data-sabji-id="${s.id}">
+      <div class="w-full h-24 rounded-[8px] mb-2 flex items-center justify-center text-4xl overflow-hidden"
+           style="background:${s.bgColor||'#f5f5f5'}" data-img-id="${s.id}">${s.emoji||'🥗'}</div>
+      <p class="text-sm font-bold leading-tight" style="color:#1A4731">${s.name}</p>
+      <p class="text-xs mt-0.5 capitalize tx-copy">${s.category}</p>
+    </button>`).join('');
+}
+
+function bindPickerGridEvents(gridEl) {
+  gridEl.querySelectorAll('.sabji-pick-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const sabjiId = card.dataset.sabjiId;
+      if (_pickerContext) {
+        const { day, meal, field, index } = _pickerContext;
+        if (field === 'sabjis') {
+          const dp = getDayPlan(day);
+          const arr = [...(dp[meal].sabjis || [])];
+          arr[index] = sabjiId;
+          updateMealSlot(day, meal, 'sabjis', arr);
+        } else {
+          updateMealSlot(day, meal, field, sabjiId);
+        }
+      }
+      removeOverlay('sabji-picker-overlay');
+      removeOverlay('suggestion-results-overlay');
+      removeOverlay('missing-ingredient-overlay');
+      refreshCurrentTab();
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   SABJI PICKER OVERLAY
+═══════════════════════════════════════════════ */
+function openSabjiPicker(categoryFilter) {
+  removeOverlay('sabji-picker-overlay');
+  const repo = loadSabjiRepo() || [];
+  const activeCat = categoryFilter || 'all';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sabji-picker-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="picker-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">Pick a Sabji</h2>
+      <button id="picker-suggest" class="tx-outline-btn h-10 px-3 text-xs">By Ingredients</button>
+    </div>
+    <div class="tx-overlay-subhead flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0">
+      ${['all','sabji','curry','gujarati'].map(cat => `
+        <button class="picker-cat-btn flex-shrink-0 px-4 py-2 rounded-pill text-sm font-medium min-h-[40px] transition-colors
+          ${activeCat === cat ? 'bg-green-accent text-white border-2 border-green-accent' : 'tx-outline-btn'}" data-cat="${cat}">
+          ${cat.charAt(0).toUpperCase()+cat.slice(1)}
+        </button>`).join('')}
+    </div>
+    <div id="picker-grid" class="flex-1 overflow-y-auto px-4 py-4">
+      <div class="grid grid-cols-2 gap-3">${renderSabjiGrid(activeCat === 'all' ? repo : repo.filter(s => s.category === activeCat))}</div>
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#picker-close').addEventListener('click', () => removeOverlay('sabji-picker-overlay'));
+  overlay.querySelector('#picker-suggest').addEventListener('click', () => {
+    removeOverlay('sabji-picker-overlay');
+    openIngredientChecklist();
+  });
+  overlay.querySelectorAll('.picker-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      overlay.querySelectorAll('.picker-cat-btn').forEach(b => {
+        b.className = b.className.replace('bg-green-accent text-white border-2 border-green-accent','tx-outline-btn');
+      });
+      btn.className = btn.className.replace('tx-outline-btn','bg-green-accent text-white border-2 border-green-accent');
+      const cat = btn.dataset.cat;
+      const filtered = cat === 'all' ? repo : repo.filter(s => s.category === cat);
+      const grid = overlay.querySelector('#picker-grid');
+      grid.innerHTML = `<div class="grid grid-cols-2 gap-3">${renderSabjiGrid(filtered)}</div>`;
+      bindPickerGridEvents(grid);
+      loadImagesIntoGrid(grid);
+    });
+  });
+  const grid = overlay.querySelector('#picker-grid');
+  bindPickerGridEvents(grid);
+  loadImagesIntoGrid(grid);
+}
+
+/* ═══════════════════════════════════════════════
+   INGREDIENT SUGGESTION
+═══════════════════════════════════════════════ */
+function suggestSabjisFromIngredients(available) {
+  const avail = new Set([...available.map(i => i.toLowerCase()), ...getStaplesSet()]);
+  return (loadSabjiRepo() || []).filter(s =>
+    s.mainIngredients.every(i => avail.has(i.toLowerCase()))
+  );
+}
+
+function openIngredientChecklist() {
+  removeOverlay('ingredient-overlay');
+  const repo = loadSabjiRepo() || [];
+  const staples = getStaplesSet();
+  const allIng = new Set();
+  repo.forEach(s => s.mainIngredients.forEach(i => { if (!staples.has(i.toLowerCase())) allIng.add(i); }));
+  const sorted = [...allIng].sort();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'ingredient-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="ing-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">What's Available?</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="tx-overlay-subhead px-4 py-2.5 flex-shrink-0">
+      <p class="text-xs tx-copy">Staples (salt, coconut, tamarind…) are always counted as available.</p>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      <div class="grid grid-cols-2 gap-2">
+        ${sorted.map(ing => `
+          <label class="tx-check-card flex items-center gap-2.5 px-3 py-3 min-h-[48px] cursor-pointer select-none">
+            <input type="checkbox" class="ingredient-check w-5 h-5 flex-shrink-0" value="${ing}">
+            <span class="text-sm" style="color:#1A4731">${ing}</span>
+          </label>`).join('')}
+      </div>
+    </div>
+    <div class="tx-overlay-footer px-4 py-4 flex-shrink-0">
+      <button id="ing-suggest-btn" class="w-full btn-primary py-4 text-base">
+        Show Possible Sabjis
+      </button>
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#ing-close').addEventListener('click', () => {
+    removeOverlay('ingredient-overlay');
+    openSabjiPicker(_pickerContext?.filter || null);
+  });
+  overlay.querySelector('#ing-suggest-btn').addEventListener('click', () => {
+    const checked = [...overlay.querySelectorAll('.ingredient-check:checked')].map(c => c.value);
+    const results = suggestSabjisFromIngredients(checked);
+    removeOverlay('ingredient-overlay');
+    openSuggestionResultsOverlay(results);
+  });
+}
+
+function openSuggestionResultsOverlay(suggestions) {
+  removeOverlay('suggestion-results-overlay');
+  const overlay = document.createElement('div');
+  overlay.id = 'suggestion-results-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="sr-back" class="tx-close-btn text-xl">←</button>
+      <h2 class="tx-title text-base font-semibold">You Can Make These</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      ${suggestions.length === 0
+        ? `<div class="text-center mt-16">
+             <p class="text-5xl mb-4">🥺</p>
+             <p class="tx-copy text-sm">No exact matches. Try checking more ingredients.</p>
+             <button id="sr-back2" class="mt-6 btn-primary px-8 py-3 text-sm">Go Back</button>
+           </div>`
+        : `<div class="grid grid-cols-2 gap-3">${renderSabjiGrid(suggestions)}</div>`
+      }
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#sr-back').addEventListener('click', () => {
+    removeOverlay('suggestion-results-overlay');
+    openIngredientChecklist();
+  });
+  overlay.querySelector('#sr-back2')?.addEventListener('click', () => {
+    removeOverlay('suggestion-results-overlay');
+    openIngredientChecklist();
+  });
+  const grid = overlay.querySelector('.grid');
+  if (grid) { bindPickerGridEvents(grid); loadImagesIntoGrid(grid); }
+}
+
+/* ═══════════════════════════════════════════════
+   MISSING INGREDIENT HANDLER
+═══════════════════════════════════════════════ */
+function handleMissingIngredient(sabjiId) {
+  const repo = loadSabjiRepo() || [];
+  const original = repo.find(s => s.id === sabjiId);
+  if (!original) return [];
+  const staples = getStaplesSet();
+  const origSet = new Set(original.mainIngredients.map(i => i.toLowerCase()));
+  return repo.filter(s => {
+    if (s.id === sabjiId) return false;
+    return s.mainIngredients.some(i => {
+      const l = i.toLowerCase();
+      return !staples.has(l) && origSet.has(l);
+    });
+  });
+}
+
+function openMissingIngredientOverlay(sabjiId) {
+  removeOverlay('missing-ingredient-overlay');
+  const original = getSabjiById(sabjiId);
+  const alts = handleMissingIngredient(sabjiId);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'missing-ingredient-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="mi-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">Alternatives</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="mx-4 mt-4 tx-card px-4 py-3 flex-shrink-0" style="background:#fff6c9">
+      <p class="text-sm font-semibold" style="color:#1A4731">Missing ingredient for <em>${original?.name||'this sabji'}</em>?</p>
+      <p class="text-xs tx-copy mt-1">These sabjis share ingredients with it.</p>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      ${alts.length === 0
+        ? `<p class="tx-empty mt-12 text-sm">No similar sabjis in your repository.</p>`
+        : `<div class="grid grid-cols-2 gap-3">${renderSabjiGrid(alts)}</div>`
+      }
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#mi-close').addEventListener('click', () => removeOverlay('missing-ingredient-overlay'));
+  const grid = overlay.querySelector('.grid');
+  if (grid) { bindPickerGridEvents(grid); loadImagesIntoGrid(grid); }
+}
+
+/* ═══════════════════════════════════════════════
+   ADMIN / SETTINGS PANEL
+═══════════════════════════════════════════════ */
+const ADMIN_SECTIONS = [
+  { key:'sabji',    label:'Sabjis' },
+  { key:'curry',    label:'Curries' },
+  { key:'gujarati', label:'Gujarati' },
+  { key:'ingredients', label:'Ingredients' },
+  { key:'integrations', label:'Integrations' },
+  { key:'data',     label:'Import/Export' },
+];
+const CAT_LABEL = { sabji:'Sabji', curry:'Curry', gujarati:'Gujarati Sabji' };
+let _adminSection = 'sabji';
+
+function openAdminOverlay() {
+  removeOverlay('admin-overlay');
+  _adminSection = 'sabji';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'admin-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="admin-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">Settings</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="tx-overlay-subhead flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0">
+      ${ADMIN_SECTIONS.map(s => `
+        <button class="admin-section-btn flex-shrink-0 px-3.5 py-2 rounded-pill text-sm font-semibold min-h-[40px] transition-colors"
+          data-section="${s.key}"
+          style="${s.key === _adminSection ? 'background:#1A4731;color:#fff' : 'background:#FFF59D;border:1.5px solid #1A4731;color:#1A4731'}">
+          ${s.label}
+        </button>`).join('')}
+    </div>
+    <div id="admin-body" class="flex-1 overflow-y-auto px-4 py-4"></div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#admin-close').addEventListener('click', () => removeOverlay('admin-overlay'));
+
+  overlay.querySelectorAll('.admin-section-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _adminSection = btn.dataset.section;
+      overlay.querySelectorAll('.admin-section-btn').forEach(b => {
+        b.style.cssText = b.dataset.section === _adminSection
+          ? 'background:#1A4731;color:#fff'
+          : 'background:#FFF59D;border:1.5px solid #1A4731;color:#1A4731';
+      });
+      renderAdminBody();
+    });
+  });
+
+  renderAdminBody();
+}
+
+function renderAdminBody() {
+  const body = document.getElementById('admin-body');
+  if (!body) return;
+
+  if (_adminSection === 'data') { renderAdminData(body); return; }
+  if (_adminSection === 'integrations') { renderAdminIntegrations(body); return; }
+
+  if (_adminSection === 'ingredients') {
+    const ingredients = loadIngredients() || [];
+    const staples = loadStaples() || DEFAULT_STAPLES;
+    const missing = ingredients.filter(i => !i.malayalam || !i.gujarati).length;
+    body.innerHTML = `
+      <div class="flex gap-2 mb-4">
+        <button id="admin-add-ingredient" class="btn-primary flex-1 py-3 text-sm active:scale-95 transition-transform">+ Add</button>
+        <button id="admin-fill-names" class="rounded-pill px-4 py-3 text-sm font-semibold" style="border:1.5px solid #1A4731;color:#1A4731">✨ Fill names${missing ? ` (${missing})` : ''}</button>
+      </div>
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Ingredients (${ingredients.length})</p>
+      <div class="grid grid-cols-2 gap-3" id="admin-ing-list">
+        ${ingredients.map(i => renderIngredientCard(i, 'admin-ing-card')).join('')}
+      </div>
+
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-7 mb-3">Staples (always on hand)</p>
+      <p class="text-xs mb-3" style="color:#4A5E50">Never shown in shopping lists — assumed always available.</p>
+      <div id="staples-tags" class="flex flex-wrap gap-2 mb-3">
+        ${staples.map(s => renderStapleTag(s)).join('')}
+      </div>
+      <div class="flex gap-2">
+        <input id="new-staple-input" type="text" placeholder="Add staple (e.g. coconut milk)"
+          class="flex-1 border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+        <button id="add-staple-btn" class="btn-primary rounded-pill px-5 py-2.5 text-sm">Add</button>
+      </div>`;
+
+    body.querySelector('#admin-add-ingredient').addEventListener('click', () => openIngredientEditor(null, 'admin'));
+    body.querySelectorAll('.admin-ing-card').forEach(card => {
+      card.addEventListener('click', () => openIngredientEditor(card.dataset.ingName, 'admin'));
+    });
+    (async () => { const g = body.querySelector('#admin-ing-list'); await resolveImagesIn(g); revealCardEmojis(g); })();
+
+    // Bulk fill Malayalam/Gujarati names via LLM
+    body.querySelector('#admin-fill-names').addEventListener('click', async () => {
+      const cfg = loadIntegrations();
+      if (!cfg.llmBaseUrl || !cfg.llmKey || !cfg.llmModel) {
+        showToast('Set LLM config in Integrations first.', 'error'); return;
+      }
+      const list = loadIngredients() || [];
+      const todo = list.filter(i => !i.malayalam || !i.gujarati);
+      if (!todo.length) { showToast('All names already filled.', 'info'); return; }
+      const btn = body.querySelector('#admin-fill-names');
+      btn.disabled = true;
+      let done = 0;
+      for (const ing of todo) {
+        try {
+          const r = await callLLMForNames(ing.name);
+          if (!ing.malayalam) ing.malayalam = r.malayalam;
+          if (!ing.gujarati) ing.gujarati = r.gujarati;
+          done++;
+          btn.textContent = `✨ Filling ${done}/${todo.length}…`;
+          saveIngredients(list);
+        } catch (e) { console.warn('fill failed for', ing.name, e); }
+        await new Promise(r => setTimeout(r, 400));
+      }
+      saveIngredients(list);
+      showToast(`Filled names for ${done}/${todo.length}.`, done ? 'success' : 'error');
+      renderAdminBody();
+    });
+
+    // Staples add/remove
+    body.querySelector('#add-staple-btn').addEventListener('click', () => {
+      const inp = body.querySelector('#new-staple-input');
+      const val = inp.value.trim().toLowerCase();
+      if (!val) return;
+      const cur = loadStaples() || DEFAULT_STAPLES;
+      if (cur.includes(val)) { showToast('Already in staples.', 'info'); return; }
+      cur.push(val); saveStaples(cur);
+      const tags = body.querySelector('#staples-tags');
+      tags.insertAdjacentHTML('beforeend', renderStapleTag(val));
+      bindStapleTagEvents(tags.lastElementChild);
+      inp.value = '';
+    });
+    body.querySelectorAll('.staple-remove-btn').forEach(b => bindStapleTagEvents(b.parentElement));
+    return;
+  }
+
+  // Dish categories: sabji | curry | gujarati
+  const cat = _adminSection;
+  const list = (loadSabjiRepo() || []).filter(s => s.category === cat);
+  body.innerHTML = `
+    <button id="admin-add-dish" class="btn-primary w-full py-3 text-sm mb-4 active:scale-95 transition-transform">+ Add ${CAT_LABEL[cat]}</button>
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">${CAT_LABEL[cat]}s (${list.length})</p>
+    <div class="flex flex-col gap-2" id="admin-sabji-list">
+      ${list.length ? list.map(s => renderAdminSabjiRow(s)).join('') : '<p class="text-sm text-gray-400">None yet.</p>'}
+    </div>`;
+  body.querySelector('#admin-add-dish').addEventListener('click', () => openDishEditor(null, cat));
+  body.querySelectorAll('.admin-sabji-row').forEach(row => bindAdminRowEvents(row));
+  body.querySelectorAll('[data-img-id]').forEach(async el => { await loadImageIntoThumb(el, el.dataset.imgId); });
+}
+
+function renderAdminSabjiRow(s) {
+  return `
+    <div class="admin-sabji-row tx-card p-3 flex items-center gap-3" data-sabji-id="${s.id}">
+      <div class="w-14 h-14 rounded-[8px] flex-shrink-0 flex items-center justify-center text-3xl overflow-hidden"
+           style="background:${s.bgColor||'#f5f5f5'}" data-img-id="${s.id}" data-img-url="${s.image||''}">${s.emoji||'🥗'}</div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-gray-800">${s.name}${s.youtube ? ' <span title="has video">▶️</span>' : ''}${s.recipe ? ' <span title="has recipe">📖</span>' : ''}</p>
+        <p class="text-xs text-gray-400 capitalize mt-0.5">${(s.mainIngredients||[]).slice(0,3).join(', ')}${(s.mainIngredients||[]).length>3?'…':''}</p>
+        <label class="mt-1.5 inline-flex items-center gap-1 text-xs text-green-accent font-medium cursor-pointer">
+          <input type="file" accept="image/*" class="hidden sabji-img-upload">
+          📷 Photo
+        </label>
+      </div>
+      <button class="edit-sabji-btn text-gray-400 text-lg w-9 h-10 flex items-center justify-center flex-shrink-0">✎</button>
+      <button class="delete-sabji-btn text-gray-300 text-xl w-9 h-10 flex items-center justify-center flex-shrink-0">🗑</button>
+    </div>`;
+}
+
+function bindAdminRowEvents(row) {
+  const sabjiId = row.dataset.sabjiId;
+
+  row.querySelector('.sabji-img-upload').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const thumb = row.querySelector('[data-img-id]');
+    try {
+      const hosted = await uploadToImgbb(file);
+      if (hosted) {
+        const repo = loadSabjiRepo() || [];
+        const it = repo.find(r => r.id === sabjiId);
+        if (it) { it.image = hosted; saveSabjiRepo(repo); await deleteImageBlob(sabjiId); }
+        thumb.dataset.imgUrl = hosted; await resolveImageEl(thumb);
+        showToast('Uploaded to imgbb.', 'success');
+      } else {
+        const blob = await compressImage(file);
+        await saveImageBlob(sabjiId, blob);
+        delete thumb.dataset.imgUrl; thumb.dataset.imgId = sabjiId; await resolveImageEl(thumb);
+        showToast('Photo saved locally.', 'success');
+      }
+    } catch (err) {
+      showToast(err.message || 'Image failed to process.', 'error');
+    }
+    e.target.value = '';
+  });
+
+  row.querySelector('.edit-sabji-btn').addEventListener('click', () => {
+    const s = getSabjiById(sabjiId);
+    openDishEditor(sabjiId, s?.category || 'sabji');
+  });
+
+  row.querySelector('.delete-sabji-btn').addEventListener('click', () => {
+    const s = getSabjiById(sabjiId);
+    if (!confirm(`Delete "${s?.name}"? This cannot be undone.`)) return;
+    const repo = (loadSabjiRepo() || []).filter(r => r.id !== sabjiId);
+    saveSabjiRepo(repo);
+    deleteImageBlob(sabjiId);
+    row.remove();
+    showToast('Deleted.', 'info');
+  });
+}
+
+/* ── Dish editor (add/edit sabji, curry, gujarati) ── */
+function openDishEditor(id, category) {
+  removeOverlay('dish-editor-overlay');
+  const existing = id ? getSabjiById(id) : null;
+  const isNew = !existing;
+  const cat = existing?.category || category || 'sabji';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'dish-editor-overlay';
+  overlay.className = 'fixed inset-0 z-[60] tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="de-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${isNew ? 'Add' : 'Edit'} ${CAT_LABEL[cat]}</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      <div class="flex flex-col gap-2.5">
+        <div id="de-photo-preview" class="w-full h-32 rounded-[12px] bg-gray-100 flex items-center justify-center text-5xl overflow-hidden">
+          ${existing?.emoji || '🥗'}
+        </div>
+        <label class="flex items-center justify-center gap-2 text-sm font-semibold rounded-pill py-2.5 cursor-pointer" style="border:1.5px solid #1A4731;color:#1A4731">
+          <input type="file" accept="image/*" capture="environment" id="de-photo-input" class="hidden">
+          📷 Photo
+        </label>
+        <input id="de-image-url" type="url" placeholder="🔗 Or paste image URL" value="${(existing?.image||'').replace(/"/g,'&quot;')}"
+          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+        <input id="de-name" type="text" placeholder="Name (e.g. Beetroot Thoran)" value="${existing?.name || ''}"
+          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+        <div class="flex gap-2">
+          <select id="de-cat" class="flex-1 border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent bg-white">
+            <option value="sabji" ${cat==='sabji'?'selected':''}>Sabji</option>
+            <option value="curry" ${cat==='curry'?'selected':''}>Curry</option>
+            <option value="gujarati" ${cat==='gujarati'?'selected':''}>Gujarati Sabji</option>
+          </select>
+          <input id="de-emoji" type="text" placeholder="Emoji" maxlength="2" value="${existing?.emoji || ''}"
+            class="w-20 border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent text-center">
+        </div>
+        <input id="de-ingredients" type="text" placeholder="Ingredients: beetroot, carrot, onion" value="${(existing?.mainIngredients||[]).join(', ')}"
+          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+        <input id="de-ref" type="text" placeholder="Short note (optional)" value="${(existing?.referenceText||'').replace(/"/g,'&quot;')}"
+          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+        <input id="de-youtube" type="url" placeholder="YouTube link (optional)" value="${(existing?.youtube||'').replace(/"/g,'&quot;')}"
+          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent">
+        <textarea id="de-recipe" placeholder="Recipe / steps (optional)" rows="6"
+          class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent resize-y">${existing?.recipe || ''}</textarea>
+        <button id="de-save" class="w-full btn-primary py-4 text-base active:scale-95 transition-transform">${isNew ? '+ Add' : 'Save Changes'}</button>
+      </div>
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#de-close').addEventListener('click', () => removeOverlay('dish-editor-overlay'));
+
+  const dePreview = overlay.querySelector('#de-photo-preview');
+  const deSetPreview = src => { dePreview.innerHTML = `<img src="${src}" class="w-full h-full object-cover rounded-[12px]" alt="" referrerpolicy="no-referrer">`; };
+  let _dePendingBlob = null;
+  let _deImageUrl = existing?.image || '';
+
+  if (existing?.image) deSetPreview(existing.image);
+  else if (id) getImageBlob(id).then(blob => { if (blob) deSetPreview(URL.createObjectURL(blob)); });
+
+  overlay.querySelector('#de-image-url').addEventListener('input', e => {
+    _deImageUrl = e.target.value.trim(); _dePendingBlob = null;
+    if (_deImageUrl) deSetPreview(_deImageUrl);
+  });
+
+  overlay.querySelector('#de-photo-input').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const hosted = await uploadToImgbb(file);
+      if (hosted) {
+        _deImageUrl = hosted; _dePendingBlob = null;
+        overlay.querySelector('#de-image-url').value = hosted;
+        deSetPreview(hosted); showToast('Uploaded to imgbb.', 'success');
+      } else {
+        _dePendingBlob = await compressImage(file); _deImageUrl = '';
+        deSetPreview(URL.createObjectURL(_dePendingBlob));
+        showToast('Saved locally (no imgbb key set).', 'info');
+      }
+    } catch (err) { showToast(err.message || 'Image failed.', 'error'); }
+    e.target.value = '';
+  });
+
+  overlay.querySelector('#de-save').addEventListener('click', async () => {
+    const name = overlay.querySelector('#de-name').value.trim();
+    if (!name) { showToast('Please enter a name.', 'error'); return; }
+    const newCat = overlay.querySelector('#de-cat').value;
+    const emoji = overlay.querySelector('#de-emoji').value.trim() || existing?.emoji || '🥗';
+    const ingredients = overlay.querySelector('#de-ingredients').value.split(',').map(s => s.trim()).filter(Boolean);
+    const ref = overlay.querySelector('#de-ref').value.trim();
+    const youtube = overlay.querySelector('#de-youtube').value.trim();
+    const recipe = overlay.querySelector('#de-recipe').value.trim();
+    const bgColors = { sabji:'#D4EDDA', curry:'#FFF3CD', gujarati:'#E2D9F3' };
+    const imageVal = _deImageUrl ? _deImageUrl : (_dePendingBlob ? '' : (existing?.image || ''));
+    const repo = loadSabjiRepo() || [];
+
+    let savedId;
+    if (isNew) {
+      savedId = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now().toString(36);
+      repo.push({ id:savedId, name, category:newCat, mainIngredients:ingredients, emoji, bgColor:bgColors[newCat], referenceText:ref, youtube, recipe, image:imageVal });
+    } else {
+      savedId = id;
+      const idx = repo.findIndex(r => r.id === id);
+      if (idx >= 0) repo[idx] = { ...repo[idx], name, category:newCat, mainIngredients:ingredients, emoji, bgColor:repo[idx].bgColor||bgColors[newCat], referenceText:ref, youtube, recipe, image:imageVal };
+    }
+    saveSabjiRepo(repo);
+    if (_dePendingBlob) await saveImageBlob(savedId, _dePendingBlob);
+    else if (_deImageUrl) await deleteImageBlob(savedId);
+    syncIngredientsFromRepo();
+    removeOverlay('dish-editor-overlay');
+    // Admin overlay is still open underneath — switch it to this dish's section and re-render
+    _adminSection = newCat;
+    const adminOverlay = document.getElementById('admin-overlay');
+    if (adminOverlay) {
+      adminOverlay.querySelectorAll('.admin-section-btn').forEach(b => {
+        b.style.cssText = b.dataset.section === newCat
+          ? 'background:#1A4731;color:#fff'
+          : 'background:#FFF59D;border:1.5px solid #1A4731;color:#1A4731';
+      });
+      renderAdminBody();
+    }
+    showToast(isNew ? `${name} added!` : 'Saved!', 'success');
+  });
+}
+
+/* ── Import / Export ── */
+function buildExportPayload() {
+  return {
+    version: 1,
+    sabjis: (loadSabjiRepo() || []).map(s => ({
+      id:s.id, name:s.name, category:s.category, mainIngredients:s.mainIngredients||[],
+      emoji:s.emoji||'', recipe:s.recipe||'', youtube:s.youtube||'', referenceText:s.referenceText||'', image:s.image||''
+    })),
+    ingredients: (loadIngredients() || []).map(i => ({
+      name:i.name, emoji:i.emoji||'', malayalam:i.malayalam||'', gujarati:i.gujarati||'', image:i.image||''
+    })),
+    staples: loadStaples() || DEFAULT_STAPLES,
+  };
+}
+
+function applyImport(data) {
+  if (!data || data.version !== 1) throw new Error('Unsupported or missing version.');
+  let dishAdd = 0, dishUpd = 0, ingAdd = 0, ingUpd = 0;
+
+  if (Array.isArray(data.sabjis)) {
+    const repo = loadSabjiRepo() || [];
+    const byId = new Map(repo.map(s => [s.id, s]));
+    const bgColors = { sabji:'#D4EDDA', curry:'#FFF3CD', gujarati:'#E2D9F3' };
+    data.sabjis.forEach(s => {
+      if (!s.name || !s.category) return;
+      const id = s.id || (s.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now().toString(36));
+      const incoming = {
+        id, name:s.name, category:s.category, mainIngredients:s.mainIngredients||[],
+        emoji:s.emoji||'🥗', bgColor:byId.get(id)?.bgColor||bgColors[s.category]||'#f5f5f5',
+        referenceText:s.referenceText||'', recipe:s.recipe||'', youtube:s.youtube||'', image:s.image||''
+      };
+      if (byId.has(id)) { Object.assign(byId.get(id), incoming); dishUpd++; }
+      else { repo.push(incoming); byId.set(id, incoming); dishAdd++; }
+    });
+    saveSabjiRepo(repo);
+  }
+
+  if (Array.isArray(data.ingredients)) {
+    const list = loadIngredients() || [];
+    const byName = new Map(list.map(i => [i.name.toLowerCase(), i]));
+    data.ingredients.forEach(i => {
+      if (!i.name) return;
+      const key = i.name.toLowerCase();
+      const incoming = { name:i.name, emoji:i.emoji||INGREDIENT_EMOJI_MAP[key]||'🥗', malayalam:i.malayalam||'', gujarati:i.gujarati||'', image:i.image||'' };
+      if (byName.has(key)) { Object.assign(byName.get(key), incoming); ingUpd++; }
+      else { list.push(incoming); byName.set(key, incoming); ingAdd++; }
+    });
+    list.sort((a,b) => a.name.localeCompare(b.name));
+    saveIngredients(list);
+  }
+
+  if (Array.isArray(data.staples)) {
+    const cur = loadStaples() || [];
+    const merged = [...new Set([...cur, ...data.staples.map(s => String(s).toLowerCase())])];
+    saveStaples(merged);
+  }
+
+  syncIngredientsFromRepo();
+  return { dishAdd, dishUpd, ingAdd, ingUpd };
+}
+
+function renderAdminData(body) {
+  const json = JSON.stringify(buildExportPayload(), null, 2);
+  body.innerHTML = `
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Export</p>
+    <p class="text-xs mb-2" style="color:#4A5E50">Download or copy your full cookbook (sabjis, curries, ingredients, staples).</p>
+    <div class="flex gap-2 mb-3">
+      <button id="data-download" class="btn-primary flex-1 py-2.5 text-sm active:scale-95 transition-transform">⬇ Download JSON</button>
+      <button id="data-copy" class="rounded-pill px-4 py-2.5 text-sm font-semibold" style="border:1.5px solid #1A4731;color:#1A4731">Copy</button>
+    </div>
+    <textarea id="data-export-text" readonly rows="6"
+      class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-xs outline-none mb-6 font-mono" style="resize:vertical">${json.replace(/</g,'&lt;')}</textarea>
+
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Import</p>
+    <p class="text-xs mb-2" style="color:#4A5E50">Upload a JSON file or paste below. Existing items are updated, new ones added — nothing is deleted.</p>
+    <label class="btn-primary w-full py-3 text-sm mb-2 cursor-pointer active:scale-95 transition-transform inline-flex justify-center">
+      📁 Choose JSON File
+      <input id="data-file" type="file" accept="application/json,.json" class="hidden">
+    </label>
+    <textarea id="data-import-text" placeholder='Paste JSON here…' rows="6"
+      class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-xs outline-none mb-2 font-mono" style="resize:vertical"></textarea>
+    <button id="data-import-btn" class="btn-primary w-full py-3 text-sm active:scale-95 transition-transform">Import Pasted JSON</button>`;
+
+  body.querySelector('#data-download').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(buildExportPayload(), null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'moms-kitchen-cookbook.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Downloaded.', 'success');
+  });
+  body.querySelector('#data-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(body.querySelector('#data-export-text').value); showToast('Copied!', 'success'); }
+    catch { body.querySelector('#data-export-text').select(); showToast('Select + copy manually.', 'info'); }
+  });
+
+  const runImport = (text) => {
+    let data;
+    try { data = JSON.parse(text); }
+    catch { showToast('Invalid JSON.', 'error'); return; }
+    try {
+      const r = applyImport(data);
+      showToast(`Imported: +${r.dishAdd} dishes, ${r.dishUpd} updated, +${r.ingAdd} ingredients.`, 'success');
+      renderAdminData(body);
+    } catch (e) { showToast(e.message || 'Import failed.', 'error'); }
+  };
+
+  body.querySelector('#data-file').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => runImport(String(reader.result));
+    reader.onerror = () => showToast('Could not read file.', 'error');
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+  body.querySelector('#data-import-btn').addEventListener('click', () => {
+    const text = body.querySelector('#data-import-text').value.trim();
+    if (!text) { showToast('Paste JSON first.', 'error'); return; }
+    runImport(text);
+  });
+}
+
+/* ── Integrations section (LLM auto-fill + imgbb uploads) ── */
+function renderAdminIntegrations(body) {
+  const c = loadIntegrations();
+  body.innerHTML = `
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AI — auto-fill ingredient names</p>
+    <p class="text-xs mb-3" style="color:#4A5E50">Any OpenAI-compatible endpoint. Free option: <b>Groq</b> — get a key at console.groq.com, base URL <code>https://api.groq.com/openai/v1</code>, model <code>llama-3.1-8b-instant</code>. For local <b>Ollama</b>: <code>http://localhost:11434/v1</code>.</p>
+    <input id="int-llm-url" type="url" placeholder="LLM Base URL (https://api.groq.com/openai/v1)" value="${(c.llmBaseUrl||'').replace(/"/g,'&quot;')}"
+      class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent mb-2">
+    <input id="int-llm-key" type="password" placeholder="LLM API Key" value="${(c.llmKey||'').replace(/"/g,'&quot;')}"
+      class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent mb-2">
+    <input id="int-llm-model" type="text" placeholder="Model (llama-3.1-8b-instant)" value="${(c.llmModel||'').replace(/"/g,'&quot;')}"
+      class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent mb-5">
+
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Image uploads (imgbb)</p>
+    <p class="text-xs mb-3" style="color:#4A5E50">Free, no backend. Get a key at api.imgbb.com. Photos upload to imgbb and store only a URL — no app storage used. Leave blank to keep photos on this device.</p>
+    <input id="int-imgbb-key" type="password" placeholder="imgbb API Key" value="${(c.imgbbKey||'').replace(/"/g,'&quot;')}"
+      class="w-full border border-gray-200 rounded-[10px] px-3 py-2.5 text-sm outline-none focus:border-green-accent mb-5">
+
+    <button id="int-save" class="btn-primary w-full py-3 text-sm active:scale-95 transition-transform">Save Integrations</button>
+    <p class="text-[11px] mt-3" style="color:#4A5E50">Keys are stored only on this device and sent only to the endpoints you configure.</p>`;
+
+  body.querySelector('#int-save').addEventListener('click', () => {
+    saveIntegrations({
+      llmBaseUrl: body.querySelector('#int-llm-url').value.trim(),
+      llmKey: body.querySelector('#int-llm-key').value.trim(),
+      llmModel: body.querySelector('#int-llm-model').value.trim(),
+      imgbbKey: body.querySelector('#int-imgbb-key').value.trim(),
+    });
+    showToast('Integrations saved.', 'success');
+  });
+}
+
+/* ── Recipe viewer (read-only, from meal slot) ── */
+function openRecipeView(sabjiId) {
+  removeOverlay('recipe-view-overlay');
+  const s = getSabjiById(sabjiId);
+  if (!s) return;
+  const ingredients = loadIngredients() || [];
+  const ingLine = (s.mainIngredients || []).map(name => {
+    const found = ingredients.find(i => i.name.toLowerCase() === name.toLowerCase());
+    const alts = found ? [found.malayalam, found.gujarati].filter(Boolean) : [];
+    return alts.length ? `${name} (${alts.join(' / ')})` : name;
+  });
+
+  const overlay = document.createElement('div');
+  overlay.id = 'recipe-view-overlay';
+  overlay.className = 'fixed inset-0 z-[60] tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="rv-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${s.emoji||'🥗'} ${s.name}</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      <div class="w-full h-40 rounded-[12px] mb-4 flex items-center justify-center text-6xl overflow-hidden"
+           style="background:${s.bgColor||'#f5f5f5'}" data-img-id="${s.id}" data-img-url="${s.image||''}">${s.emoji||'🥗'}</div>
+      ${s.youtube ? `<a href="${s.youtube}" target="_blank" rel="noopener" class="btn-primary w-full py-3 text-sm mb-4 inline-flex justify-center">▶️ Watch on YouTube</a>` : ''}
+      ${ingLine.length ? `
+        <div class="tx-card p-4 mb-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Ingredients</p>
+          <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1 capitalize">
+            ${ingLine.map(l => `<li>${l}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+      <div class="tx-card p-4">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Recipe</p>
+        ${s.recipe
+          ? `<p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">${s.recipe.replace(/</g,'&lt;')}</p>`
+          : `<p class="text-sm text-gray-400">No recipe yet. Add one in Settings → ${CAT_LABEL[s.category]||'dishes'}.</p>`}
+        ${s.referenceText ? `<p class="text-xs mt-3 italic" style="color:#4A5E50">${s.referenceText.replace(/</g,'&lt;')}</p>` : ''}
+      </div>
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#rv-close').addEventListener('click', () => removeOverlay('recipe-view-overlay'));
+  resolveImagesIn(overlay);
+}
+
+/* ═══════════════════════════════════════════════
+   STAPLES OVERLAY
+═══════════════════════════════════════════════ */
+function renderStapleTag(s) {
+  return `
+    <div class="staple-tag flex items-center gap-1 rounded-pill pl-3 pr-1 py-1" style="background:#FFF59D;border:1.5px solid #1A4731" data-staple="${s}">
+      <span class="text-sm font-medium capitalize" style="color:#1A4731">${s}</span>
+      <button class="staple-remove-btn w-6 h-6 flex items-center justify-center rounded-full" style="color:#4A5E50">✕</button>
+    </div>`;
+}
+
+function bindStapleTagEvents(tagEl) {
+  tagEl.querySelector('.staple-remove-btn').addEventListener('click', () => {
+    const val = tagEl.dataset.staple;
+    const current = (loadStaples() || DEFAULT_STAPLES).filter(s => s !== val);
+    saveStaples(current);
+    tagEl.remove();
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   PANTRY / INGREDIENT MANAGEMENT
+═══════════════════════════════════════════════ */
+async function renderIngredientsView() {
+  const container = document.getElementById('tab-ingredients');
+  const ingredients = loadIngredients() || [];
+
+  container.innerHTML = `
+    <div class="px-4 pt-1">
+      <p class="tx-panel-label mb-3">Pantry</p>
+      <div class="flex gap-2 mb-4">
+        <button id="fridge-mode-btn" class="flex-1 btn-primary py-3 text-sm">🧊 Plan from Fridge</button>
+        <button id="add-ingredient-btn" class="tx-outline-btn py-3 px-4 text-sm">+ Add</button>
+      </div>
+      ${ingredients.length === 0
+        ? '<p class="tx-empty mt-12 text-sm">No ingredients yet.</p>'
+        : `<div class="grid grid-cols-2 gap-3" id="ingredients-grid">
+            ${ingredients.map(ing => `
+              <button class="ingredient-card tx-card p-3 text-left active:scale-95 transition-transform"
+                      data-ingredient-name="${ing.name}">
+                <div class="w-full h-20 rounded-[8px] mb-2 flex items-center justify-center text-3xl overflow-hidden tx-soft-fill"
+                     data-ingredient-img="${ing.name}">${ing.emoji || '🥗'}</div>
+                <p class="text-sm font-medium text-gray-800 leading-tight capitalize">${ing.name}</p>
+                ${(ing.malayalam || ing.gujarati) ? `<p class="text-[11px] mt-0.5 leading-tight capitalize tx-copy">${[ing.malayalam, ing.gujarati].filter(Boolean).join(' · ')}</p>` : ''}
+              </button>`).join('')}
+           </div>`
+      }
+    </div>`;
+
+  container.querySelector('#fridge-mode-btn')?.addEventListener('click', openFridgeMode);
+  container.querySelector('#add-ingredient-btn')?.addEventListener('click', () => openIngredientEditor(null));
+  container.querySelectorAll('.ingredient-card').forEach(card => {
+    card.addEventListener('click', () => openIngredientEditor(card.dataset.ingredientName));
+  });
+
+  const grid = container.querySelector('#ingredients-grid');
+  if (grid) {
+    for (const cell of grid.querySelectorAll('[data-ingredient-img]')) {
+      const blob = await getIngredientImage(cell.dataset.ingredientImg);
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        cell.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-[8px]" alt="">`;
+      }
+    }
+  }
+}
+
+function openIngredientEditor(name, origin) {
+  removeOverlay('ingredient-editor-overlay');
+  const ingredients = loadIngredients() || [];
+  const existing = name ? ingredients.find(i => i.name === name) : null;
+  const isNew = !existing;
+  const refreshOrigin = () => {
+    if (origin === 'admin' && document.getElementById('admin-overlay')) renderAdminBody();
+    else renderIngredientsView();
+  };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'ingredient-editor-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="ie-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${isNew ? 'Add Ingredient' : 'Edit Ingredient'}</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      <div class="flex flex-col gap-3">
+        <div id="ie-photo-preview" class="tx-image-well w-full h-32 flex items-center justify-center text-5xl overflow-hidden">
+          ${existing?.emoji || '🥗'}
+        </div>
+        <div class="flex gap-2">
+          <label class="tx-outline-btn flex-1 gap-2 text-sm py-2.5 cursor-pointer">
+            <input type="file" accept="image/*" capture="environment" id="ie-photo-input" class="hidden">
+            📷 Photo
+          </label>
+        </div>
+        <input id="ie-image-url" type="url" placeholder="🔗 Or paste image URL" value="${(existing?.image||'').replace(/"/g,'&quot;')}"
+          class="tx-input">
+        <input id="ie-name" type="text" placeholder="Name (e.g. drumstick)" value="${existing?.name || ''}"
+          class="tx-input">
+        <button id="ie-autofill" class="tx-outline-btn py-2.5 text-sm">✨ Auto-fill Malayalam + Gujarati names</button>
+        <input id="ie-malayalam" type="text" placeholder="Malayalam name in English (e.g. muringakka)" value="${existing?.malayalam || ''}"
+          class="tx-input">
+        <input id="ie-gujarati" type="text" placeholder="Gujarati name in English (e.g. saragvo)" value="${existing?.gujarati || ''}"
+          class="tx-input">
+        <input id="ie-emoji" type="text" placeholder="Emoji" maxlength="2" value="${existing?.emoji || ''}"
+          class="tx-input text-center">
+        <button id="ie-save-btn" class="w-full btn-primary py-4 text-base">
+          ${isNew ? '+ Add Ingredient' : 'Save Changes'}
+        </button>
+        ${!isNew ? `<button id="ie-delete-btn" class="w-full tx-danger-btn py-3 text-sm">🗑 Delete Ingredient</button>` : ''}
+      </div>
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+
+  overlay.querySelector('#ie-close').addEventListener('click', () => {
+    removeOverlay('ingredient-editor-overlay');
+    refreshOrigin();
+  });
+
+  const preview = overlay.querySelector('#ie-photo-preview');
+  const setPreview = src => { preview.innerHTML = `<img src="${src}" class="w-full h-full object-cover rounded-[12px]" alt="" referrerpolicy="no-referrer">`; };
+
+  let _pendingBlob = null;
+  let _pendingImageUrl = existing?.image || '';
+
+  if (existing?.image) setPreview(existing.image);
+  else if (name) {
+    getIngredientImage(name).then(blob => { if (blob) setPreview(URL.createObjectURL(blob)); });
+  }
+
+  overlay.querySelector('#ie-image-url').addEventListener('input', e => {
+    _pendingImageUrl = e.target.value.trim();
+    _pendingBlob = null;
+    if (_pendingImageUrl) setPreview(_pendingImageUrl);
+  });
+
+  overlay.querySelector('#ie-photo-input').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const hosted = await uploadToImgbb(file);   // null if no imgbb key → local blob fallback
+      if (hosted) {
+        _pendingImageUrl = hosted; _pendingBlob = null;
+        overlay.querySelector('#ie-image-url').value = hosted;
+        setPreview(hosted);
+        showToast('Uploaded to imgbb.', 'success');
+      } else {
+        _pendingBlob = await compressImage(file); _pendingImageUrl = '';
+        setPreview(URL.createObjectURL(_pendingBlob));
+        showToast('Saved locally (no imgbb key set).', 'info');
+      }
+    } catch (err) { showToast(err.message || 'Image failed.', 'error'); }
+    e.target.value = '';
+  });
+
+  overlay.querySelector('#ie-autofill').addEventListener('click', async () => {
+    const nm = overlay.querySelector('#ie-name').value.trim();
+    if (!nm) { showToast('Enter a name first.', 'error'); return; }
+    const btn = overlay.querySelector('#ie-autofill');
+    const orig = btn.textContent; btn.textContent = '✨ Thinking…'; btn.disabled = true;
+    try {
+      const r = await callLLMForNames(nm);
+      if (r.malayalam) overlay.querySelector('#ie-malayalam').value = r.malayalam;
+      if (r.gujarati) overlay.querySelector('#ie-gujarati').value = r.gujarati;
+      showToast('Names filled — review + save.', 'success');
+    } catch (e) { showToast(e.message || 'Auto-fill failed.', 'error'); }
+    btn.textContent = orig; btn.disabled = false;
+  });
+
+  overlay.querySelector('#ie-save-btn').addEventListener('click', async () => {
+    const newName = overlay.querySelector('#ie-name').value.trim();
+    const newEmoji = overlay.querySelector('#ie-emoji').value.trim() || INGREDIENT_EMOJI_MAP[newName.toLowerCase()] || '🥗';
+    const malayalam = overlay.querySelector('#ie-malayalam').value.trim();
+    const gujarati = overlay.querySelector('#ie-gujarati').value.trim();
+    if (!newName) { showToast('Enter a name.', 'error'); return; }
+
+    const imageVal = _pendingImageUrl ? _pendingImageUrl : (_pendingBlob ? '' : (existing?.image || ''));
+
+    const list = loadIngredients() || [];
+    if (isNew) {
+      if (list.find(i => i.name.toLowerCase() === newName.toLowerCase())) {
+        showToast('Already in pantry.', 'info'); return;
+      }
+      list.push({ name: newName, emoji: newEmoji, malayalam, gujarati, image: imageVal });
+    } else {
+      const idx = list.findIndex(i => i.name === name);
+      if (idx >= 0) {
+        if (newName !== name && !_pendingBlob) {
+          const oldBlob = await getIngredientImage(name);
+          if (oldBlob) { await saveIngredientImage(newName, oldBlob); await deleteIngredientImage(name); }
+        }
+        list[idx] = { name: newName, emoji: newEmoji, malayalam, gujarati, image: imageVal };
+      }
+    }
+    list.sort((a, b) => a.name.localeCompare(b.name));
+    saveIngredients(list);
+    if (_pendingBlob) await saveIngredientImage(newName, _pendingBlob);
+    else if (_pendingImageUrl) await deleteIngredientImage(newName);  // URL replaces any local blob
+    removeOverlay('ingredient-editor-overlay');
+    refreshOrigin();
+    showToast(isNew ? `${newName} added!` : 'Updated!', 'success');
+  });
+
+  overlay.querySelector('#ie-delete-btn')?.addEventListener('click', async () => {
+    if (!confirm(`Delete "${name}"?`)) return;
+    const list = (loadIngredients() || []).filter(i => i.name !== name);
+    saveIngredients(list);
+    await deleteIngredientImage(name);
+    removeOverlay('ingredient-editor-overlay');
+    refreshOrigin();
+    showToast('Deleted.', 'info');
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   DIRECTION A — INGREDIENTS NEEDED
+═══════════════════════════════════════════════ */
+function computeIngredientsNeeded(scope) {
+  const staples = getStaplesSet();
+  const plan = loadWeeklyPlan();
+
+  let dayKeys = [];
+  if (scope === 'today') dayKeys = [getTodayKey()];
+  else if (scope === 'tomorrow') dayKeys = [getTomorrowKey()];
+  else if (scope === 'week') dayKeys = DAYS;
+  else if (DAYS.includes(scope)) dayKeys = [scope];
+  else dayKeys = DAYS;
+
+  const mealCounts = { breakfast: {}, lunch: {}, dinner: {} };
+
+  if (plan?.days) {
+    dayKeys.forEach(day => {
+      const dp = plan.days[day] || emptyDayPlan();
+      const mealIds = {
+        breakfast: (dp.breakfast?.sabjis || []),
+        lunch: [dp.lunch?.curry, dp.lunch?.sabji, dp.lunch?.gujaratiSabji].filter(Boolean),
+        dinner: [dp.dinner?.curry, ...(dp.dinner?.sabjis || []), dp.dinner?.gujaratiSabji].filter(Boolean),
+      };
+      Object.entries(mealIds).forEach(([meal, ids]) => {
+        ids.forEach(id => {
+          const s = getSabjiById(id);
+          if (!s) return;
+          s.mainIngredients.forEach(ing => {
+            if (!staples.has(ing.toLowerCase())) {
+              mealCounts[meal][ing] = (mealCounts[meal][ing] || 0) + 1;
+            }
+          });
+        });
+      });
+    });
+  }
+
+  const total = {};
+  Object.values(mealCounts).forEach(mealObj => {
+    Object.entries(mealObj).forEach(([ing, count]) => {
+      total[ing] = (total[ing] || 0) + count;
+    });
+  });
+
+  return { ...mealCounts, total };
+}
+
+function openIngredientsNeeded(scope) {
+  removeOverlay('ingredients-needed-overlay');
+  const data = computeIngredientsNeeded(scope);
+  const scopeLabel = scope === 'today' ? "Today's Ingredients"
+    : scope === 'tomorrow' ? "Tomorrow's Ingredients"
+    : scope === 'week' ? 'Weekly Ingredients'
+    : `${DAY_FULL[scope] || scope} Ingredients`;
+
+  function buildChecklist(counts) {
+    const items = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    if (!items.length) return '<p class="text-xs tx-copy py-2">Nothing needed.</p>';
+    return `<div class="flex flex-col gap-2">
+      ${items.map(([ing, count]) => `
+        <label class="tx-check-card flex items-center gap-3 px-4 py-3 cursor-pointer select-none">
+          <input type="checkbox" class="ing-check w-5 h-5 flex-shrink-0">
+          <span class="text-sm flex-1 capitalize" style="color:#1A4731">${ing}</span>
+          <span class="text-xs tx-copy font-medium tabular">${count}×</span>
+        </label>`).join('')}
+    </div>`;
+  }
+
+  const sections = [
+    { label: '🌅 Breakfast', counts: data.breakfast },
+    { label: '☀️ Lunch',     counts: data.lunch },
+    { label: '🌙 Dinner',    counts: data.dinner },
+  ].filter(s => Object.keys(s.counts).length > 0);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'ingredients-needed-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="in-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">${scopeLabel}</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="tx-overlay-subhead px-4 py-2 flex-shrink-0">
+      <p class="text-xs tx-copy">Staples always excluded. Tap to check off.</p>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      ${sections.length === 0
+        ? '<p class="tx-empty mt-12 text-sm">Plan some meals first.</p>'
+        : `${sections.map(s => `
+            <div class="mb-4">
+              <p class="tx-panel-label mb-2">${s.label}</p>
+              ${buildChecklist(s.counts)}
+            </div>`).join('')}
+           ${sections.length > 1 ? `
+            <div class="mb-4 pt-4" style="border-top:2px solid #1A4731">
+              <p class="tx-panel-label mb-2">📦 Total</p>
+              ${buildChecklist(data.total)}
+            </div>` : ''}
+          `
+      }
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#in-close').addEventListener('click', () => removeOverlay('ingredients-needed-overlay'));
+
+  overlay.querySelectorAll('.ing-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const label = cb.closest('label');
+      if (cb.checked) { label.classList.add('opacity-50'); label.querySelector('span').classList.add('line-through'); }
+      else { label.classList.remove('opacity-50'); label.querySelector('span').classList.remove('line-through'); }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   DIRECTION B — FRIDGE MODE
+═══════════════════════════════════════════════ */
+async function openFridgeMode() {
+  removeOverlay('fridge-mode-overlay');
+  const ingredients = loadIngredients() || [];
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fridge-mode-overlay';
+  overlay.className = 'fixed inset-0 z-50 tx-overlay flex flex-col max-w-[430px] mx-auto overlay-enter';
+  overlay.innerHTML = `
+    <div class="tx-overlay-header flex items-center justify-between px-4 py-4 flex-shrink-0">
+      <button id="fm-close" class="tx-close-btn">✕</button>
+      <h2 class="tx-title text-base font-semibold">🧊 What's in the Fridge?</h2>
+      <div class="w-10"></div>
+    </div>
+    <div class="tx-overlay-subhead px-4 py-2.5 flex-shrink-0">
+      <p class="text-xs tx-copy">Check what you have. Staples are always assumed available.</p>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      ${ingredients.length === 0
+        ? '<p class="tx-empty mt-12 text-sm">No ingredients in pantry yet.</p>'
+        : `<div class="grid grid-cols-2 gap-2" id="fridge-grid">
+            ${ingredients.map(ing => `
+              <label class="tx-check-card flex items-center gap-2.5 px-3 py-3 min-h-[52px] cursor-pointer select-none">
+                <input type="checkbox" class="fridge-check w-5 h-5 flex-shrink-0" value="${ing.name}">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-lg overflow-hidden flex-shrink-0 tx-soft-fill"
+                     data-ing-img="${ing.name}" data-img-url="${ing.image||''}">${ing.emoji || '🥗'}</div>
+                <span class="text-sm capitalize leading-tight flex-1" style="color:#1A4731">${ing.name}</span>
+              </label>`).join('')}
+           </div>`
+      }
+    </div>
+    <div class="tx-overlay-footer px-4 py-4 flex-shrink-0">
+      <label class="flex items-center gap-3 mb-4 cursor-pointer select-none">
+        <input type="checkbox" id="gujarati-toggle" class="w-5 h-5">
+        <span class="text-sm" style="color:#1A4731">Include Gujarati sabji for wife?</span>
+      </label>
+      <button id="fm-generate-btn" class="w-full btn-primary py-4 text-base">
+        Generate Today + Tomorrow
+      </button>
+    </div>`;
+
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelector('#fm-close').addEventListener('click', () => removeOverlay('fridge-mode-overlay'));
+
+  await resolveImagesIn(overlay);
+
+  overlay.querySelector('#fm-generate-btn').addEventListener('click', () => {
+    const available = [...overlay.querySelectorAll('.fridge-check:checked')].map(c => c.value);
+    const includeGujarati = overlay.querySelector('#gujarati-toggle').checked;
+    removeOverlay('fridge-mode-overlay');
+    generatePlanFromFridge(available, includeGujarati);
+  });
+}
+
+function generatePlanFromFridge(available, includeGujarati) {
+  let makeable = suggestSabjisFromIngredients(available);
+  if (!includeGujarati) makeable = makeable.filter(s => s.category !== 'gujarati');
+
+  const sabjis    = makeable.filter(s => s.category === 'sabji');
+  const curries   = makeable.filter(s => s.category === 'curry');
+  const gujaratis = makeable.filter(s => s.category === 'gujarati');
+
+  const shuffle = arr => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  const sShuffle = shuffle(sabjis);
+  const cShuffle = shuffle(curries);
+  const gShuffle = shuffle(gujaratis);
+
+  let sIdx = 0, cIdx = 0, gIdx = 0, filledCount = 0;
+
+  const fillDay = (dayKey) => {
+    const dp = getDayPlan(dayKey);
+
+    // Breakfast: up to 2 sabjis
+    if (!dp.breakfast?.sabjis?.[0] && sShuffle[sIdx]) {
+      updateMealSlot(dayKey, 'breakfast', 'sabjis', [sShuffle[sIdx++].id]);
+      filledCount++;
+    }
+    if (getDayPlan(dayKey).breakfast?.sabjis?.[0] && !getDayPlan(dayKey).breakfast?.sabjis?.[1] && sShuffle[sIdx]) {
+      const arr = [...getDayPlan(dayKey).breakfast.sabjis];
+      arr[1] = sShuffle[sIdx++].id;
+      updateMealSlot(dayKey, 'breakfast', 'sabjis', arr);
+      filledCount++;
+    }
+
+    // Lunch
+    if (!getDayPlan(dayKey).lunch?.curry && cShuffle[cIdx]) {
+      updateMealSlot(dayKey, 'lunch', 'curry', cShuffle[cIdx++].id);
+      filledCount++;
+    }
+    if (!getDayPlan(dayKey).lunch?.sabji && sShuffle[sIdx]) {
+      updateMealSlot(dayKey, 'lunch', 'sabji', sShuffle[sIdx++].id);
+      filledCount++;
+    }
+    if (includeGujarati && !getDayPlan(dayKey).lunch?.gujaratiSabji && gShuffle[gIdx]) {
+      updateMealSlot(dayKey, 'lunch', 'gujaratiSabji', gShuffle[gIdx++].id);
+      filledCount++;
+    }
+
+    // Dinner
+    if (!getDayPlan(dayKey).dinner?.curry && cShuffle[cIdx]) {
+      updateMealSlot(dayKey, 'dinner', 'curry', cShuffle[cIdx++].id);
+      filledCount++;
+    }
+    if (!getDayPlan(dayKey).dinner?.sabjis?.[0] && sShuffle[sIdx]) {
+      updateMealSlot(dayKey, 'dinner', 'sabjis', [sShuffle[sIdx++].id]);
+      filledCount++;
+    }
+    if (getDayPlan(dayKey).dinner?.sabjis?.[0] && !getDayPlan(dayKey).dinner?.sabjis?.[1] && sShuffle[sIdx]) {
+      const arr = [...getDayPlan(dayKey).dinner.sabjis];
+      arr[1] = sShuffle[sIdx++].id;
+      updateMealSlot(dayKey, 'dinner', 'sabjis', arr);
+      filledCount++;
+    }
+    if (includeGujarati && !getDayPlan(dayKey).dinner?.gujaratiSabji && gShuffle[gIdx]) {
+      updateMealSlot(dayKey, 'dinner', 'gujaratiSabji', gShuffle[gIdx++].id);
+      filledCount++;
+    }
+  };
+
+  fillDay(getTodayKey());
+  fillDay(getTomorrowKey());
+
+  // Switch to today tab
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById('tab-today').classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active', 'text-green-accent');
+    b.classList.add('text-muted');
+    b.querySelector('.tab-icon').classList.remove('bg-green-light');
+  });
+  const todayBtn = document.querySelector('[data-tab="today"]');
+  todayBtn.classList.add('active', 'text-green-accent');
+  todayBtn.classList.remove('text-muted');
+  todayBtn.querySelector('.tab-icon').classList.add('bg-green-light');
+  renderDayView(getTodayKey(), 'tab-today');
+
+  if (makeable.length === 0) {
+    showToast('Nothing makeable with those ingredients. Try checking more.', 'info');
+  } else if (filledCount === 0) {
+    showToast('All slots already filled!', 'info');
+  } else {
+    showToast(`Added ${filledCount} dish${filledCount > 1 ? 'es' : ''} to today & tomorrow!`, 'success');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   TAB NAVIGATION
+═══════════════════════════════════════════════ */
+function initTabs() {
+  const panels = document.querySelectorAll('.tab-panel');
+  const buttons = document.querySelectorAll('.tab-btn');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      panels.forEach(p => p.classList.add('hidden'));
+      document.getElementById(`tab-${target}`).classList.remove('hidden');
+
+      buttons.forEach(b => {
+        b.classList.remove('active','text-green-accent');
+        b.classList.add('text-muted');
+        b.querySelector('.tab-icon').classList.remove('bg-green-light');
+      });
+      btn.classList.add('active','text-green-accent');
+      btn.classList.remove('text-muted');
+      btn.querySelector('.tab-icon').classList.add('bg-green-light');
+
+      if (target === 'today') renderDayView(getTodayKey(), 'tab-today');
+      if (target === 'tomorrow') renderNextDayView();
+      if (target === 'week') renderWeekView();
+      if (target === 'ingredients') renderIngredientsView();
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   PWA INSTALL
+═══════════════════════════════════════════════ */
+let _deferredInstall = null;
+
+function initPWA() {
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _deferredInstall = e;
+    const banner = document.getElementById('install-banner');
+    banner.classList.remove('hidden');
+    banner.classList.add('flex');
+  });
+
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!_deferredInstall) return;
+    _deferredInstall.prompt();
+    const { outcome } = await _deferredInstall.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('install-banner').classList.add('hidden');
+    }
+    _deferredInstall = null;
+  });
+
+  document.getElementById('install-dismiss').addEventListener('click', () => {
+    document.getElementById('install-banner').classList.add('hidden');
+  });
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   HEADER DATE
+═══════════════════════════════════════════════ */
+function setHeaderDate() {
+  const opts = { weekday: 'long', day: 'numeric', month: 'long' };
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-IN', opts);
+}
+
+/* ═══════════════════════════════════════════════
+   WEEK ROLLOVER TOAST
+═══════════════════════════════════════════════ */
+function checkWeekRolloverToast() {
+  const lastWeek = localStorage.getItem(STORAGE_KEY_LASTWEEK);
+  if (lastWeek) {
+    const plan = JSON.parse(lastWeek);
+    if (plan.weekStartingDate && plan.weekStartingDate !== getWeekStartDate()) {
+      setTimeout(() => {
+        showToast('New week! Tap "Week" → "Use Last Week" to copy last week\'s plan.', 'info');
+      }, 1200);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+async function init() {
+  await initImageDB();
+  seedRepoIfNeeded();
+  seedPlanIfNeeded();
+  seedStaplesIfNeeded();
+  seedIngredientsIfNeeded();
+  setHeaderDate();
+  initPWA();
+  initTabs();
+  checkWeekRolloverToast();
+
+  document.getElementById('admin-btn').addEventListener('click', openAdminOverlay);
+
+  // Activate today tab by default
+  document.querySelector('[data-tab="today"]').click();
+}
+
+init();
+</script>
+</body>
+</html>

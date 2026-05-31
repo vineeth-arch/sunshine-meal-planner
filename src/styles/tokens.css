@@ -1,0 +1,12 @@
+:root {
+  --bg: #f5f5c8;
+  --green: #1a4731;
+  --green-muted: #4a5e50;
+  --yellow: #f5e642;
+  --sage: #e8edcb;
+  --white: #ffffff;
+  --danger: #9a3c2d;
+  --shadow-sm: 3px 3px 0 var(--green);
+  --shadow-md: 4px 4px 0 var(--green);
+  --shadow-lg: 6px 6px 0 var(--green);
+}

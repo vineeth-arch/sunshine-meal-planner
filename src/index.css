@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+@import './styles/tokens.css';
+
+@theme {
+  --color-cream: #f5f5c8;
+  --color-green-accent: #1a4731;
+  --color-green-light: #c8f5d0;
+  --color-green-soft: #e8edcb;
+  --color-cta-yellow: #f5e642;
+  --color-muted: #4a5e50;
+  --font-sans: 'DM Sans', Arial, sans-serif;
+  --font-display: 'Syne', Arial, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--bg);
+  color: var(--green);
+  font-family: 'DM Sans', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.mk-shell {
+  margin: 0 auto;
+  min-height: 100vh;
+  max-width: 430px;
+  background: var(--bg);
+}
+
+.mk-card {
+  border: 2px solid var(--green);
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.mk-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid var(--green);
+  font-weight: 700;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.mk-button:hover {
+  transform: translate(-2px, -2px);
+}
+
+.mk-button-primary {
+  background: var(--yellow);
+  color: var(--green);
+  box-shadow: var(--shadow-md);
+}
+
+.mk-button-secondary {
+  background: var(--white);
+  color: var(--green);
+  box-shadow: var(--shadow-sm);
+}
+
+.mk-button-danger {
+  background: var(--white);
+  color: var(--danger);
+  border-color: var(--danger);
+  box-shadow: 3px 3px 0 var(--danger);
+}
+
+.mk-input,
+.mk-select,
+.mk-textarea {
+  width: 100%;
+  border: 2px solid var(--green);
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--green);
+  padding: 0.75rem 0.9rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.mk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  background: color-mix(in srgb, var(--green) 22%, transparent);
+}
+
+.mk-modal-panel {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 430px;
+  flex-direction: column;
+  background: var(--bg);
+}
