@@ -5,9 +5,10 @@ import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { StatCard } from '../../components/ui/StatCard'
 import { getCloudConfigError, isCloudConfigured } from '../../lib/supabase'
-import type { AdminImportPreview, AdminRoleLabels, UserRole } from '../../types/domain'
+import type { AdminAllHouseholdsOverview, AdminImportPreview, AdminRoleLabels, UserRole } from '../../types/domain'
 import {
   exportHouseholdBackup,
+  getAllHouseholdsOverview,
   getAdminDashboardData,
   importHouseholdBackup,
   previewHouseholdImport,
@@ -49,6 +50,7 @@ export function AdminScreen() {
   const { profile, user } = useAuth()
   const cloudConfigError = getCloudConfigError()
   const [dashboard, setDashboard] = useState<AdminDashboardData | null>(null)
+  const [allHouseholdsOverview, setAllHouseholdsOverview] = useState<AdminAllHouseholdsOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -68,8 +70,18 @@ export function AdminScreen() {
 
     setLoading(true)
     try {
+      if (profile.isSuperadmin) {
+        const nextOverview = await getAllHouseholdsOverview({ profile, user })
+        setAllHouseholdsOverview(nextOverview)
+        setDashboard(null)
+        setRoleLabels(DEFAULT_ROLE_LABELS)
+        setError(null)
+        return
+      }
+
       const nextDashboard = await getAdminDashboardData({ profile, user })
       setDashboard(nextDashboard)
+      setAllHouseholdsOverview(null)
       setRoleLabels({
         admin: nextDashboard.settings?.roleLabels?.admin?.trim() || DEFAULT_ROLE_LABELS.admin,
         editor: nextDashboard.settings?.roleLabels?.editor?.trim() || DEFAULT_ROLE_LABELS.editor,
@@ -248,6 +260,82 @@ export function AdminScreen() {
             </div>
           </div>
         </PanelCard>
+      ) : null}
+
+      {allHouseholdsOverview ? (
+        <>
+          <PanelCard className="mk-stack-sm">
+            <h3 className="mk-subtitle">Platform overview</h3>
+            <div className="mk-stat-grid">
+              <StatCard label="Households" value={String(allHouseholdsOverview.counts.households)} tone="accent" />
+              <StatCard label="Profiles" value={String(allHouseholdsOverview.counts.profiles)} />
+              <StatCard label="Dishes" value={String(allHouseholdsOverview.counts.dishes)} />
+              <StatCard label="Ingredients" value={String(allHouseholdsOverview.counts.ingredients)} />
+              <StatCard label="Pantry items" value={String(allHouseholdsOverview.counts.pantryItems)} />
+              <StatCard label="Weekly plans" value={String(allHouseholdsOverview.counts.weeklyPlans)} />
+            </div>
+            <p className="mk-meta">Superadmin overview is read-only. Cross-household writes are not available here.</p>
+          </PanelCard>
+
+          <PanelCard className="mk-stack-sm">
+            <h3 className="mk-subtitle">Households</h3>
+            {allHouseholdsOverview.households.length ? (
+              <div className="mk-stack-sm">
+                {allHouseholdsOverview.households.map((entry) => (
+                  <div key={entry.household.id} className="mk-subpanel mk-stack-sm">
+                    <div className="mk-inline-title">
+                      <h4 className="mk-subtitle">{entry.household.name}</h4>
+                      <span className="mk-profile-badge">{entry.profiles.length} profiles</span>
+                    </div>
+                    <p className="mk-meta">Household ID: {entry.household.id}</p>
+                    <p className="mk-meta">Owner UID: {entry.household.ownerUid || 'Not available'}</p>
+                    <div className="mk-stat-grid">
+                      <StatCard label="Dishes" value={String(entry.counts.dishes)} />
+                      <StatCard label="Ingredients" value={String(entry.counts.ingredients)} />
+                      <StatCard label="Pantry items" value={String(entry.counts.pantryItems)} />
+                      <StatCard label="Weekly plans" value={String(entry.counts.weeklyPlans)} />
+                    </div>
+                    {entry.recentChanges.length ? (
+                      <div className="mk-stack-xs">
+                        {entry.recentChanges.slice(0, 3).map((change) => (
+                          <p key={`${change.collection}-${change.id}-${change.updatedAt}`} className="mk-meta">
+                            {change.collection}: {change.label} updated {formatTimestamp(change.updatedAt)}
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mk-meta">No recent household activity.</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No households" description="No households were returned by Supabase." />
+            )}
+          </PanelCard>
+
+          <PanelCard className="mk-stack-sm">
+            <h3 className="mk-subtitle">All profiles</h3>
+            {allHouseholdsOverview.profiles.length ? (
+              <div className="mk-stack-sm">
+                {allHouseholdsOverview.profiles.map((entry) => (
+                  <div key={entry.uid} className="mk-subpanel mk-stack-xs">
+                    <div className="mk-inline-title">
+                      <h4 className="mk-subtitle">{entry.displayName}</h4>
+                      <span className="mk-profile-badge">{roleLabelFor(entry.role, roleLabels)}</span>
+                    </div>
+                    <p className="mk-meta">Email: {entry.email || 'Not available'}</p>
+                    <p className="mk-meta">Household ID: {entry.householdId || 'Not assigned'}</p>
+                    <p className="mk-meta">UID: {entry.uid}</p>
+                    {entry.isSuperadmin ? <p className="mk-meta">Platform superadmin</p> : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No profiles" description="No profiles were returned by Supabase." />
+            )}
+          </PanelCard>
+        </>
       ) : null}
 
       {dashboard ? (

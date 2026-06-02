@@ -10,15 +10,16 @@ import type {
   AdminBackupStaple,
   AdminBackupUserProfile,
   AdminBackupWeeklyPlan,
+  AdminAllHouseholdsOverview,
   AdminDataCounts,
+  AdminHouseholdOverview,
   AdminImportPreview,
   AdminImportResult,
   AdminRecentChange,
   HouseholdSettingsDocument,
-  UserRole,
 } from '../../types/domain'
 import { isAdmin, isSuperadmin } from '../../features/auth/access'
-import { getHousehold, mapUserProfile } from './supabaseProfileService'
+import { getHousehold, mapHousehold, mapUserProfile, type HouseholdRow, type ProfileRow } from './supabaseProfileService'
 import {
   mapHouseholdSettingsDocument,
   mapMealSlotDocument,
@@ -48,21 +49,19 @@ export interface AdminDashboardData {
   recentChanges: AdminRecentChange[]
 }
 
-type ProfileRow = {
-  id: string
-  role: UserRole
-  household_id: string | null
-  is_superadmin: boolean | null
-  display_name: string | null
-  email: string | null
-  created_at: string
-}
-
 function assertAdminContext(context: CloudServiceContext) {
   if (!isAdmin(context.profile) && !isSuperadmin(context.profile)) {
     throw new Error('Admin access is required.')
   }
   return requireHouseholdAccess(context)
+}
+
+function assertSuperadminContext(context: CloudServiceContext) {
+  if (!context.user || !isSuperadmin(context.profile)) {
+    throw new Error('Superadmin access is required.')
+  }
+
+  return context.user
 }
 
 function serializeHousehold(value: Awaited<ReturnType<typeof getHousehold>>): AdminBackupHousehold {
@@ -217,6 +216,166 @@ export async function getAdminDashboardData(context: CloudServiceContext): Promi
         weeklyPlans: data.weeklyPlans.length,
       },
       recentChanges: buildRecentChanges(data).slice(0, 20),
+    }
+  })
+}
+
+async function selectAllRows<T>(table: string): Promise<T[]> {
+  const { data, error } = await requireSupabase()
+    .from(table)
+    .select('*')
+
+  if (error) throw error
+  return (data ?? []) as T[]
+}
+
+function countByHousehold<T extends { household_id: string }>(rows: T[]) {
+  return rows.reduce((counts, row) => {
+    counts.set(row.household_id, (counts.get(row.household_id) ?? 0) + 1)
+    return counts
+  }, new Map<string, number>())
+}
+
+function groupProfilesByHousehold(profiles: AdminBackupUserProfile[]) {
+  return profiles.reduce((groups, profile) => {
+    const householdId = profile.householdId
+    const current = groups.get(householdId) ?? []
+    current.push(profile)
+    groups.set(householdId, current)
+    return groups
+  }, new Map<string, AdminBackupUserProfile[]>())
+}
+
+export async function getAllHouseholdsOverview(context: CloudServiceContext): Promise<AdminAllHouseholdsOverview> {
+  return withServiceError('Could not load all households overview', async () => {
+    assertSuperadminContext(context)
+    const supabase = requireSupabase()
+
+    const [
+      householdsResult,
+      profilesResult,
+      dishes,
+      ingredients,
+      staples,
+      pantryItems,
+      weeklyPlans,
+      mealSlots,
+    ] = await Promise.all([
+      supabase.from('households').select('id, name, created_by, created_at'),
+      supabase.from('profiles').select('id, role, household_id, is_superadmin, display_name, email, created_at'),
+      selectAllRows<DataRow>('dishes'),
+      selectAllRows<DataRow>('ingredients'),
+      selectAllRows<DataRow>('staples'),
+      selectAllRows<DataRow>('pantry_items'),
+      selectAllRows<WeeklyPlanRow>('weekly_plans'),
+      selectAllRows<MealSlotRow>('meal_slots'),
+    ])
+
+    if (householdsResult.error) throw householdsResult.error
+    if (profilesResult.error) throw profilesResult.error
+
+    const households = ((householdsResult.data ?? []) as HouseholdRow[])
+      .map((row) => serializeHousehold(mapHousehold(row)))
+      .sort((left, right) => left.name.localeCompare(right.name))
+    const profiles = ((profilesResult.data ?? []) as ProfileRow[])
+      .map(serializeProfile)
+      .sort((left, right) => left.displayName.localeCompare(right.displayName))
+    const profilesByHousehold = groupProfilesByHousehold(profiles)
+    const dishCounts = countByHousehold(dishes)
+    const ingredientCounts = countByHousehold(ingredients)
+    const pantryCounts = countByHousehold(pantryItems)
+    const weeklyPlanCounts = countByHousehold(weeklyPlans)
+
+    const recentByHousehold = new Map<string, Array<AdminRecentChange & { householdId: string }>>()
+    const pushRecent = (householdId: string, change: AdminRecentChange) => {
+      const current = recentByHousehold.get(householdId) ?? []
+      current.push({ ...change, householdId })
+      recentByHousehold.set(householdId, current)
+    }
+
+    dishes.forEach((row) => {
+      const entry = mapDishDocument(row)
+      pushRecent(row.household_id, {
+      id: entry.id,
+      collection: 'dishes',
+      label: entry.name,
+      updatedBy: entry.updatedBy,
+      updatedAt: entry.updatedAt,
+      })
+    })
+    ingredients.forEach((row) => {
+      const entry = mapIngredientDocument(row)
+      pushRecent(row.household_id, {
+      id: entry.id,
+      collection: 'ingredients',
+      label: entry.name,
+      updatedBy: entry.updatedBy,
+      updatedAt: entry.updatedAt,
+      })
+    })
+    staples.forEach((row) => {
+      const entry = mapStapleDocument(row)
+      pushRecent(row.household_id, {
+      id: entry.id,
+      collection: 'staples',
+      label: entry.name,
+      updatedBy: entry.updatedBy,
+      updatedAt: entry.updatedAt,
+      })
+    })
+    pantryItems.forEach((row) => {
+      const entry = mapPantryItemDocument(row)
+      pushRecent(row.household_id, {
+      id: entry.id,
+      collection: 'pantryItems',
+      label: entry.name,
+      updatedBy: entry.updatedBy,
+      updatedAt: entry.updatedAt,
+      })
+    })
+    weeklyPlans.forEach((row) => {
+      const entry = mapWeeklyPlanDocument(row)
+      pushRecent(row.household_id, {
+      id: entry.id,
+      collection: 'weeklyPlans',
+      label: entry.weekStart,
+      updatedBy: entry.updatedBy,
+      updatedAt: entry.updatedAt,
+      })
+    })
+    mealSlots.map((row) => ({ row, entry: mapMealSlotDocument(row) })).forEach(({ row, entry }) => pushRecent(row.household_id, {
+      id: entry.id,
+      collection: 'mealSlots',
+      label: `${row.week_start} • ${entry.day} ${entry.mealType} • ${entry.slotType}`,
+      updatedBy: entry.updatedBy,
+      updatedAt: entry.updatedAt,
+    }))
+
+    const overviewHouseholds: AdminHouseholdOverview[] = households.map((household) => ({
+      household,
+      profiles: profilesByHousehold.get(household.id) ?? [],
+      counts: {
+        dishes: dishCounts.get(household.id) ?? 0,
+        ingredients: ingredientCounts.get(household.id) ?? 0,
+        pantryItems: pantryCounts.get(household.id) ?? 0,
+        weeklyPlans: weeklyPlanCounts.get(household.id) ?? 0,
+      },
+      recentChanges: (recentByHousehold.get(household.id) ?? [])
+        .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+        .slice(0, 10),
+    }))
+
+    return {
+      households: overviewHouseholds,
+      profiles,
+      counts: {
+        households: overviewHouseholds.length,
+        profiles: profiles.length,
+        dishes: dishes.length,
+        ingredients: ingredients.length,
+        pantryItems: pantryItems.length,
+        weeklyPlans: weeklyPlans.length,
+      },
     }
   })
 }
@@ -405,64 +564,8 @@ export async function importHouseholdBackup(
       throw new Error('This backup belongs to a different household and cannot be imported here.')
     }
 
-    await upsertRow('households', {
-      id: access.householdId,
-      name: payload.household.name,
-      created_by: payload.household.ownerUid || access.user.id,
-    })
-
-    await Promise.all([
-      ...payload.profiles.map((entry) => upsertRow('profiles', {
-        id: entry.uid,
-        display_name: entry.displayName,
-        email: entry.email,
-        role: entry.role,
-        household_id: entry.householdId,
-        is_superadmin: false,
-      })),
-      ...(payload.settings ? [upsertRow('household_settings', {
-        household_id: access.householdId,
-        data: payload.settings,
-        updated_by: access.user.id,
-      })] : []),
-      ...payload.dishes.map((entry) => upsertRow('dishes', {
-        household_id: access.householdId,
-        id: entry.id,
-        data: entry,
-        updated_by: access.user.id,
-      })),
-      ...payload.ingredients.map((entry) => upsertRow('ingredients', {
-        household_id: access.householdId,
-        id: entry.id,
-        data: entry,
-        updated_by: access.user.id,
-      })),
-      ...payload.staples.map((entry) => upsertRow('staples', {
-        household_id: access.householdId,
-        id: entry.id,
-        data: entry,
-        updated_by: access.user.id,
-      })),
-      ...payload.pantryItems.map((entry) => upsertRow('pantry_items', {
-        household_id: access.householdId,
-        id: entry.id,
-        data: entry,
-        updated_by: access.user.id,
-      })),
-      ...payload.weeklyPlans.map((entry) => upsertRow('weekly_plans', {
-        household_id: access.householdId,
-        week_start: entry.weekStart,
-        data: entry,
-        updated_by: access.user.id,
-      })),
-      ...payload.mealSlots.map((entry) => upsertRow('meal_slots', {
-        household_id: access.householdId,
-        week_start: entry.planId,
-        id: entry.id,
-        data: entry,
-        updated_by: access.user.id,
-      })),
-    ])
+    const { error } = await requireSupabase().rpc('import_household_data', { payload })
+    if (error) throw error
 
     return preview.operations
   })

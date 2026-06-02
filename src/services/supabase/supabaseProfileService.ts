@@ -3,7 +3,7 @@ import type { Household, UserProfile, UserRole } from '../../types/domain'
 
 const USER_ROLES: UserRole[] = ['admin', 'editor', 'member']
 
-type ProfileRow = {
+export type ProfileRow = {
   id: string
   role: string
   household_id: string | null
@@ -13,7 +13,7 @@ type ProfileRow = {
   created_at: string
 }
 
-type HouseholdRow = {
+export type HouseholdRow = {
   id: string
   name: string | null
   created_by: string | null

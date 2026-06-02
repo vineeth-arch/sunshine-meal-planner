@@ -48,6 +48,7 @@ import {
 } from '../services/local/indexedDbImageService'
 import {
   persistIngredients,
+  persistIntegrations,
   persistLastWeekPlan,
   persistPlan,
   persistRepo,
@@ -57,7 +58,7 @@ import {
 import { listDishImagesAsDataUrls, listIngredientImagesAsDataUrls } from '../services/local/imageStore'
 import { canEdit, isAdmin, isSuperadmin } from '../features/auth/access'
 import { isMockAuthEnabled } from '../features/auth/test-auth'
-import { isCloudConfigured } from '../lib/supabase'
+import { isCloudConfigured, supabase } from '../lib/supabase'
 import { getDishes, createDish, deleteDish as deleteDishDocument, updateDish } from '../services/supabase/dishes'
 import {
   createIngredient,
@@ -73,6 +74,14 @@ import { getWeekStartDate } from '../lib/date/plans'
 
 type DishDraft = Omit<Dish, 'id'> & { id?: string }
 type IngredientDraft = Ingredient & { previousName?: string }
+type RealtimeDataRow = {
+  household_id?: string
+  updated_by?: string | null
+}
+type RealtimePayload = {
+  new: RealtimeDataRow | null
+  old: RealtimeDataRow | null
+}
 
 type FridgePlanResult = {
   filledCount: number
@@ -229,8 +238,9 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null)
   const [syncState, setSyncState] = useState<KitchenSyncState>('idle')
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
   const saveTimeoutRef = useRef<number | null>(null)
-  const canEditData = canEdit(auth.profile)
+  const canEditData = isCloudConfigured() && online && Boolean(auth.user && auth.profile) && canEdit(auth.profile)
   const canImportExport = isAdmin(auth.profile) || isSuperadmin(auth.profile)
 
   const requireWriteAccess = useCallback(() => {
@@ -238,14 +248,14 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
       throw new Error('Connect to edit.')
     }
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (!online) {
       throw new Error('Connect to edit.')
     }
 
     if (!canEdit(auth.profile)) {
       throw new Error('Connect to edit. This profile is read-only.')
     }
-  }, [auth.profile, auth.user])
+  }, [auth.profile, auth.user, online])
 
   const setSavedState = useCallback((message: string) => {
     setSyncState('saved')
@@ -358,6 +368,62 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
       window.clearTimeout(timeoutId)
     }
   }, [auth.loading, auth.profileState, refreshData])
+
+  useEffect(() => {
+    function handleOnline() {
+      setOnline(true)
+    }
+
+    function handleOffline() {
+      setOnline(false)
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (mockAuthEnabled || !supabase || !auth.user || !auth.profile?.householdId) {
+      return
+    }
+
+    const client = supabase
+    const householdId = auth.profile.householdId
+    const userId = auth.user.id
+    const channel = client.channel(`household-cache-${householdId}`)
+    const handleRemoteChange = (payload: RealtimePayload) => {
+      const row = payload.new ?? payload.old
+      if (!row || row.household_id !== householdId || row.updated_by === userId) return
+      void refreshData()
+    }
+
+    ;[
+      'dishes',
+      'ingredients',
+      'staples',
+      'pantry_items',
+      'weekly_plans',
+      'meal_slots',
+      'household_settings',
+    ].forEach((table) => {
+      channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table, filter: `household_id=eq.${householdId}` },
+        (payload) => handleRemoteChange(payload as RealtimePayload),
+      )
+    })
+
+    channel.subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
+    }
+  }, [auth.profile?.householdId, auth.user, mockAuthEnabled, refreshData])
 
   useEffect(() => () => {
     if (saveTimeoutRef.current) {
@@ -643,6 +709,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
       integrations,
       settings: { ...state.settings, integrations },
     }, { persist: false })
+    persistIntegrations(integrations)
   }
 
   async function importPayloadToCloud(

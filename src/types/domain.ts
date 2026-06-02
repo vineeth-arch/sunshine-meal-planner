@@ -367,6 +367,26 @@ export interface AdminDataCounts {
   weeklyPlans: number
 }
 
+export interface AdminHouseholdOverview {
+  household: AdminBackupHousehold
+  profiles: AdminBackupUserProfile[]
+  counts: AdminDataCounts
+  recentChanges: Array<AdminRecentChange & { householdId: string }>
+}
+
+export interface AdminAllHouseholdsOverview {
+  households: AdminHouseholdOverview[]
+  profiles: AdminBackupUserProfile[]
+  counts: {
+    households: number
+    profiles: number
+    dishes: number
+    ingredients: number
+    pantryItems: number
+    weeklyPlans: number
+  }
+}
+
 export interface AdminRoleLabels {
   admin: string
   editor: string

@@ -1,4 +1,5 @@
 import { createEmptyWeekDays } from '../../lib/date/plans'
+import { requireSupabase } from '../../lib/supabase'
 import type {
   MealSlotDocument,
   WeeklyPlan,
@@ -156,12 +157,8 @@ export async function saveWeeklyPlan(
       updated_by: access.user.id,
     })
 
-    await deleteRows('meal_slots', {
-      household_id: access.householdId,
-      week_start: weekStart,
-    })
-
-    await Promise.all(collectPlanSlots(plan).map((slot) => upsertRow<MealSlotRow>('meal_slots', {
+    const slots = collectPlanSlots(plan)
+    const slotRows = slots.map((slot) => ({
       household_id: access.householdId,
       week_start: weekStart,
       id: buildMealSlotId(slot),
@@ -175,7 +172,27 @@ export async function saveWeeklyPlan(
         updatedBy: access.user.id,
       },
       updated_by: access.user.id,
-    })))
+    }))
+
+    if (slotRows.length) {
+      const { error: upsertError } = await requireSupabase()
+        .from('meal_slots')
+        .upsert(slotRows)
+
+      if (upsertError) throw upsertError
+    }
+
+    const staleDelete = requireSupabase()
+      .from('meal_slots')
+      .delete()
+      .eq('household_id', access.householdId)
+      .eq('week_start', weekStart)
+
+    const { error: deleteError } = slotRows.length
+      ? await staleDelete.not('id', 'in', `(${slotRows.map((slot) => `"${slot.id.replace(/"/g, '\\"')}"`).join(',')})`)
+      : await staleDelete
+
+    if (deleteError) throw deleteError
 
     return getWeeklyPlan(context, weekStart)
   })

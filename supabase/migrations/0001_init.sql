@@ -402,15 +402,132 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  target_household uuid;
+  current_household uuid;
+  entry jsonb;
 begin
   if not (public.current_role() = 'admin' or public.current_is_superadmin()) then
     raise exception 'Only household admins or platform superadmins can import household data.';
   end if;
 
-  -- Phase 4 TODO: validate payload version and target household.
-  -- Phase 4 TODO: upsert household/profile labels as needed without self-elevation.
-  -- Phase 4 TODO: upsert dishes, ingredients, staples, pantry_items, weekly_plans, meal_slots, and household_settings atomically.
-  -- Phase 4 TODO: preserve cache/export JSON version 1 mapping at the client boundary.
+  if coalesce((payload->>'version')::integer, 0) <> 1 then
+    raise exception 'Unsupported backup version. Expected version 1.';
+  end if;
+
+  target_household := (payload->>'householdId')::uuid;
+  current_household := public.current_household_id();
+
+  if target_household is null then
+    raise exception 'householdId is required.';
+  end if;
+
+  if not public.current_is_superadmin() and target_household <> current_household then
+    raise exception 'This backup belongs to a different household and cannot be imported here.';
+  end if;
+
+  if (payload->'household'->>'id')::uuid <> target_household then
+    raise exception 'Backup household id does not match householdId.';
+  end if;
+
+  insert into public.households (id, name, created_by)
+  values (
+    target_household,
+    payload->'household'->>'name',
+    nullif(payload->'household'->>'ownerUid', '')::uuid
+  )
+  on conflict (id) do update
+    set name = excluded.name;
+
+  for entry in select * from jsonb_array_elements(coalesce(payload->'profiles', '[]'::jsonb))
+  loop
+    if (entry->>'householdId')::uuid <> target_household then
+      raise exception 'Backup profiles must stay inside the target household.';
+    end if;
+
+    if entry->>'role' not in ('member', 'editor', 'admin') then
+      raise exception 'Profile role must be member, editor, or admin.';
+    end if;
+
+    insert into public.profiles (id, display_name, email, role, household_id, is_superadmin)
+    values (
+      (entry->>'uid')::uuid,
+      entry->>'displayName',
+      entry->>'email',
+      entry->>'role',
+      target_household,
+      false
+    )
+    on conflict (id) do update
+      set display_name = excluded.display_name,
+          email = excluded.email,
+          role = excluded.role,
+          household_id = excluded.household_id,
+          is_superadmin = false;
+  end loop;
+
+  if payload ? 'settings' and payload->'settings' <> 'null'::jsonb then
+    insert into public.household_settings (household_id, data, updated_by)
+    values (target_household, payload->'settings', auth.uid())
+    on conflict (household_id) do update
+      set data = excluded.data,
+          updated_by = auth.uid();
+  end if;
+
+  for entry in select * from jsonb_array_elements(coalesce(payload->'dishes', '[]'::jsonb))
+  loop
+    insert into public.dishes (household_id, id, data, updated_by)
+    values (target_household, entry->>'id', entry, auth.uid())
+    on conflict (household_id, id) do update
+      set data = excluded.data,
+          updated_by = auth.uid();
+  end loop;
+
+  for entry in select * from jsonb_array_elements(coalesce(payload->'ingredients', '[]'::jsonb))
+  loop
+    insert into public.ingredients (household_id, id, data, updated_by)
+    values (target_household, entry->>'id', entry, auth.uid())
+    on conflict (household_id, id) do update
+      set data = excluded.data,
+          updated_by = auth.uid();
+  end loop;
+
+  for entry in select * from jsonb_array_elements(coalesce(payload->'staples', '[]'::jsonb))
+  loop
+    insert into public.staples (household_id, id, data, updated_by)
+    values (target_household, entry->>'id', entry, auth.uid())
+    on conflict (household_id, id) do update
+      set data = excluded.data,
+          updated_by = auth.uid();
+  end loop;
+
+  for entry in select * from jsonb_array_elements(coalesce(payload->'pantryItems', '[]'::jsonb))
+  loop
+    insert into public.pantry_items (household_id, id, data, updated_by)
+    values (target_household, entry->>'id', entry, auth.uid())
+    on conflict (household_id, id) do update
+      set data = excluded.data,
+          updated_by = auth.uid();
+  end loop;
+
+  for entry in select * from jsonb_array_elements(coalesce(payload->'weeklyPlans', '[]'::jsonb))
+  loop
+    insert into public.weekly_plans (household_id, week_start, data, updated_by)
+    values (target_household, entry->>'weekStart', entry, auth.uid())
+    on conflict (household_id, week_start) do update
+      set data = excluded.data,
+          updated_by = auth.uid();
+  end loop;
+
+  for entry in select * from jsonb_array_elements(coalesce(payload->'mealSlots', '[]'::jsonb))
+  loop
+    insert into public.meal_slots (household_id, week_start, id, data, updated_by)
+    values (target_household, entry->>'planId', entry->>'id', entry, auth.uid())
+    on conflict (household_id, week_start, id) do update
+      set data = excluded.data,
+          updated_by = auth.uid();
+  end loop;
+
   return;
 end
 $$;
