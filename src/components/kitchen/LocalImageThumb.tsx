@@ -39,8 +39,19 @@ export function LocalImageThumb({
     }
   }, [hostedUrl, id, kind])
 
+  async function handleImageError() {
+    if (!hostedUrl || src !== hostedUrl) return
+
+    const fallback =
+      kind === 'dish'
+        ? await resolveDishImageSrc(id)
+        : await resolveIngredientImageSrc(id)
+
+    setSrc(fallback)
+  }
+
   if (src) {
-    return <img src={src} alt={alt} className={className} />
+    return <img src={src} alt={alt} className={className} onError={() => void handleImageError()} />
   }
 
   return <div className={className}>{emoji}</div>

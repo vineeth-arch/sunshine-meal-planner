@@ -101,7 +101,6 @@ export interface Integrations {
   llmBaseUrl?: string
   llmKey?: string
   llmModel?: string
-  imgbbKey?: string
 }
 
 export interface ProfilePlaceholder {

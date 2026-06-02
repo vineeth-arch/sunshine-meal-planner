@@ -30,6 +30,10 @@ Required browser-safe variables:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
+Server-side Cloudflare Pages Function variable:
+
+- `UPLOADTHING_TOKEN` for UploadThing image hosting. Keep this server-side only; do not add a `VITE_` prefix.
+
 Cloud sync requires:
 
 - Google provider enabled in Supabase Auth.
@@ -73,7 +77,7 @@ Do not run `npx supabase db push --linked` without explicit approval.
 - Build output directory: `dist`
 - Root directory: repo root
 - Framework preset: `Vite`
-- Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `UPLOADTHING_TOKEN`
 
 The repo includes `public/_redirects`:
 
@@ -82,3 +86,11 @@ The repo includes `public/_redirects`:
 ```
 
 After deploy, add the Pages production URL and preview URLs to Supabase Auth redirect URLs, then test `/login`, `/dashboard`, `/admin`, and direct refresh on protected routes.
+
+For local UploadThing image upload testing, use Cloudflare Pages Functions:
+
+```bash
+npx wrangler pages dev dist
+```
+
+Plain `npm run dev` runs Vite only and cannot exercise `functions/api/uploadthing.ts`.

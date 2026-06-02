@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { useLocalKitchen } from '../../app/local-kitchen-context'
 import { LocalImageThumb } from '../../components/kitchen/LocalImageThumb'
+import { UploadThingImageField } from '../../components/kitchen/UploadThingImageField'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -202,6 +203,11 @@ export function IngredientsScreen() {
                 Hosted image URL
                 <input className="mk-input" value={draft.image} onChange={(event) => setDraft({ ...draft, image: event.target.value })} />
               </label>
+
+              <UploadThingImageField
+                disabled={!allowEdit}
+                onUploaded={(url) => setDraft({ ...draft, image: url })}
+              />
 
               <label className="mk-field">
                 Local image upload

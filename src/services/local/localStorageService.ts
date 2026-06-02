@@ -197,7 +197,6 @@ function normalizeIntegrations(value: unknown): Integrations {
     llmBaseUrl: String(value.llmBaseUrl ?? '').trim(),
     llmKey: String(value.llmKey ?? '').trim(),
     llmModel: String(value.llmModel ?? '').trim(),
-    imgbbKey: String(value.imgbbKey ?? '').trim(),
   }
 }
 

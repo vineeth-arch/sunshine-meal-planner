@@ -76,15 +76,15 @@ export async function listIngredientImagesAsDataUrls() {
 }
 
 export async function resolveDishImageSrc(id: string, hostedUrl?: string) {
-  if (hostedUrl) return hostedUrl
+  if (hostedUrl && (typeof navigator === 'undefined' || navigator.onLine)) return hostedUrl
   const blob = await getDishImage(id)
-  return blob ? blobToDataUrl(blob) : null
+  return blob ? blobToDataUrl(blob) : hostedUrl ?? null
 }
 
 export async function resolveIngredientImageSrc(name: string, hostedUrl?: string) {
-  if (hostedUrl) return hostedUrl
+  if (hostedUrl && (typeof navigator === 'undefined' || navigator.onLine)) return hostedUrl
   const blob = await getIngredientImage(name)
-  return blob ? blobToDataUrl(blob) : null
+  return blob ? blobToDataUrl(blob) : hostedUrl ?? null
 }
 
 export async function compressImage(file: File, maxPx = 1024, quality = 0.82): Promise<Blob> {

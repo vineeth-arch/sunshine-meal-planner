@@ -99,16 +99,6 @@ export function SettingsScreen() {
               disabled={!allowEdit}
             />
           </label>
-          <label className="mk-field">
-            imgbb key
-            <input
-              className="mk-input"
-              type="password"
-              value={integrations.imgbbKey ?? ''}
-              onChange={(event) => setLocalIntegrations({ ...integrations, imgbbKey: event.target.value })}
-              disabled={!allowEdit}
-            />
-          </label>
           {allowEdit ? (
             <button type="submit" className="mk-button mk-button-primary mk-button-pad">
               Save integrations
