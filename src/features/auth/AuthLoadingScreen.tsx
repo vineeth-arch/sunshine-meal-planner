@@ -8,7 +8,7 @@ type AuthLoadingScreenProps = {
 
 export function AuthLoadingScreen({
   title = 'Checking your kitchen access',
-  description = 'Mom’s Kitchen is confirming your saved Firebase session before opening the app.',
+  description = 'Mom’s Kitchen is confirming your saved Supabase session before opening the app.',
 }: AuthLoadingScreenProps) {
   return (
     <div className="mk-auth-screen">

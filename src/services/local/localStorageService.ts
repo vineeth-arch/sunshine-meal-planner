@@ -238,22 +238,14 @@ export function loadLocalKitchenState(): LocalKitchenState {
       ? storedIngredients
       : buildIngredientsFromRepo(nextRepo, nextStaples)
 
-  if (!repoResult.exists) writeJson(STORAGE_KEY_REPO, nextRepo)
-  if (!staplesResult.exists) writeJson(STORAGE_KEY_STAPLES, nextStaples)
-  if (!ingredientsResult.exists) writeJson(STORAGE_KEY_INGREDIENTS, nextIngredients)
-  if (!integrationsResult.exists) writeJson(STORAGE_KEY_INTEGRATIONS, integrations)
-
   if (!plan) {
     plan = seedPlan()
-    if (!planResult.corrupted) writeJson(STORAGE_KEY_PLAN, plan)
   }
 
   const currentWeekStart = getWeekStartDate()
   if (plan.weekStartingDate !== currentWeekStart) {
-    if (!planResult.corrupted) writeJson(STORAGE_KEY_LAST_WEEK, plan)
     lastWeekPlan = plan
     plan = seedPlan()
-    writeJson(STORAGE_KEY_PLAN, plan)
   }
 
   return {

@@ -29,7 +29,7 @@ export function SettingsScreen() {
       <ScreenHeader
         eyebrow="Settings"
         title="Local settings and migration tools"
-        description="Keep integrations local to this browser while Firestore handles household kitchen data."
+        description="Review device settings while Supabase handles household kitchen data."
       />
 
       {syncMessage ? (
@@ -49,7 +49,7 @@ export function SettingsScreen() {
 
       {!allowEdit ? (
         <PanelCard>
-          <p className="mk-meta">Viewer access is read-only. Local integrations are visible but cannot be edited.</p>
+          <p className="mk-meta">Member access is read-only. Connect with edit access to change integrations.</p>
         </PanelCard>
       ) : null}
 
@@ -62,7 +62,7 @@ export function SettingsScreen() {
       <PanelCard className="mk-stack-sm">
         <h3 className="mk-subtitle">Household backup tools</h3>
         <p className="mk-copy">
-          Firestore household backup export and merge import now live in the Admin dashboard so access control, preview, and confirmation all stay in one place.
+          Supabase household backup export and merge import live in the Admin dashboard so access control, preview, and confirmation stay in one place.
         </p>
         <p className="mk-meta">Settings now stays focused on device-local integrations and local placeholders only.</p>
       </PanelCard>
@@ -70,7 +70,7 @@ export function SettingsScreen() {
       <PanelCard className="mk-stack-sm">
         <form className="mk-stack-sm" onSubmit={handleIntegrationsSubmit}>
           <h3 className="mk-subtitle">Integrations</h3>
-          <p className="mk-copy">These values stay local on this device. Firestore sync does not store them.</p>
+          <p className="mk-copy">These values are editable only for connected editor or admin profiles.</p>
           <label className="mk-field">
             LLM base URL
             <input

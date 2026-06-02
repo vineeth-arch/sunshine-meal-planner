@@ -5,7 +5,7 @@ import { AuthAdminDeniedScreen } from './AuthAdminDeniedScreen'
 import { AuthLoadingScreen } from './AuthLoadingScreen'
 import { AuthProfileErrorScreen } from './AuthProfileErrorScreen'
 import { AuthSetupRequiredScreen } from './AuthSetupRequiredScreen'
-import { canView, isAdmin } from './access'
+import { canView, isAdmin, isSuperadmin } from './access'
 import { useAuth } from './use-auth'
 
 export function RequireAuth({ children }: PropsWithChildren) {
@@ -17,7 +17,7 @@ export function RequireAuth({ children }: PropsWithChildren) {
     return (
       <AuthLoadingScreen
         title="Loading your kitchen profile"
-        description="Mom's Kitchen is fetching your Firestore access profile before opening the app."
+        description="Mom's Kitchen is fetching your Supabase access profile before opening the app."
       />
     )
   }
@@ -37,7 +37,7 @@ export function RequireAdmin({ children }: PropsWithChildren) {
 
   if (loading || (user && profileState === 'loading')) return <AuthLoadingScreen />
   if (!user) return <Navigate to="/login" replace />
-  if (!isAdmin(profile)) return <AuthAdminDeniedScreen />
+  if (!isAdmin(profile) && !isSuperadmin(profile)) return <AuthAdminDeniedScreen />
 
   return children
 }

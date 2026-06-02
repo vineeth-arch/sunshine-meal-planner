@@ -2,8 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 
 import { MobileNav } from '../components/navigation/MobileNav'
 import { useLocalKitchen } from './local-kitchen-context'
-import { isAdmin } from '../features/auth/access'
-import { getProfileLabelFromEmail } from '../features/auth/profile-options'
+import { isAdmin, isSuperadmin } from '../features/auth/access'
 import { useAuth } from '../features/auth/use-auth'
 
 export function AppShell() {
@@ -14,8 +13,8 @@ export function AppShell() {
     month: 'short',
     day: 'numeric',
   }).format(new Date())
-  const signedInLabel = profile?.displayName || getProfileLabelFromEmail(user?.email) || user?.email || 'Signed in'
-  const showAdmin = isAdmin(profile)
+  const signedInLabel = profile?.displayName || user?.email || 'Signed in'
+  const showAdmin = isAdmin(profile) || isSuperadmin(profile)
 
   return (
     <div className="mk-app-frame">
@@ -26,7 +25,7 @@ export function AppShell() {
             <h1 className="mk-title">Family planning hub</h1>
             <p className="mk-meta">{signedInLabel} • {dateLabel}</p>
             <p className="mk-meta">
-              {loading ? 'Loading Firestore data' : syncState === 'saving' ? 'Saving' : syncState === 'failed' ? 'Failed' : syncState === 'saved' ? 'Saved' : 'Synced'}
+              {loading ? 'Loading cloud data' : syncState === 'saving' ? 'Saving' : syncState === 'failed' ? 'Failed' : syncState === 'saved' ? 'Saved' : 'Synced'}
               {syncMessage ? ` • ${syncMessage}` : ''}
             </p>
           </div>

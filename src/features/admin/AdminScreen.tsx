@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react'
-import type { Timestamp } from 'firebase/firestore'
 
 import { EmptyState } from '../../components/ui/EmptyState'
 import { PanelCard } from '../../components/ui/PanelCard'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { StatCard } from '../../components/ui/StatCard'
-import { getFirebaseConfigError, hasFirebaseConfig } from '../../lib/firebase'
+import { getCloudConfigError, isCloudConfigured } from '../../lib/supabase'
 import type { AdminImportPreview, AdminRoleLabels, UserRole } from '../../types/domain'
 import {
   exportHouseholdBackup,
@@ -14,22 +13,22 @@ import {
   previewHouseholdImport,
   saveAdminRoleLabels,
   type AdminDashboardData,
-} from '../../services/firestore/admin'
+} from '../../services/supabase/admin'
 import { useAuth } from '../auth/use-auth'
 
 const DEFAULT_ROLE_LABELS: AdminRoleLabels = {
   admin: 'Admin',
   editor: 'Editor',
-  viewer: 'Viewer',
+  member: 'Member',
 }
 
-function formatTimestamp(value?: Timestamp | null): string {
+function formatTimestamp(value?: string | null): string {
   if (!value) return 'Not available'
 
   return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(value.toDate())
+  }).format(new Date(value))
 }
 
 function formatDateString(value: string): string {
@@ -48,7 +47,7 @@ function roleLabelFor(role: UserRole, labels: AdminRoleLabels): string {
 
 export function AdminScreen() {
   const { profile, user } = useAuth()
-  const firebaseConfigError = getFirebaseConfigError()
+  const cloudConfigError = getCloudConfigError()
   const [dashboard, setDashboard] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -74,7 +73,7 @@ export function AdminScreen() {
       setRoleLabels({
         admin: nextDashboard.settings?.roleLabels?.admin?.trim() || DEFAULT_ROLE_LABELS.admin,
         editor: nextDashboard.settings?.roleLabels?.editor?.trim() || DEFAULT_ROLE_LABELS.editor,
-        viewer: nextDashboard.settings?.roleLabels?.viewer?.trim() || DEFAULT_ROLE_LABELS.viewer,
+        member: nextDashboard.settings?.roleLabels?.member?.trim() || DEFAULT_ROLE_LABELS.member,
       })
       setError(null)
     } catch (caught) {
@@ -176,7 +175,7 @@ export function AdminScreen() {
       setRoleLabels({
         admin: saved.roleLabels?.admin?.trim() || DEFAULT_ROLE_LABELS.admin,
         editor: saved.roleLabels?.editor?.trim() || DEFAULT_ROLE_LABELS.editor,
-        viewer: saved.roleLabels?.viewer?.trim() || DEFAULT_ROLE_LABELS.viewer,
+        member: saved.roleLabels?.member?.trim() || DEFAULT_ROLE_LABELS.member,
       })
       setDashboard((current) => (current ? { ...current, settings: saved } : current))
       setMessage('Saved display-only role labels for the admin dashboard.')
@@ -193,15 +192,15 @@ export function AdminScreen() {
         eyebrow="Admin"
         title="Household admin dashboard"
         description={
-          hasFirebaseConfig()
-            ? 'Review every linked profile, inspect household data volume, export Firestore backups, preview merge imports, and manage display-only role labels.'
-            : 'Cloud sync is not configured yet. Firebase setup is still required before this admin dashboard can manage household data.'
+          isCloudConfigured()
+            ? 'Review linked profiles, inspect household data volume, export Supabase backups, preview merge imports, and manage display-only role labels.'
+            : 'Cloud sync is not configured yet. Supabase setup is required before this admin dashboard can manage household data.'
         }
       />
 
-      {firebaseConfigError ? (
+      {cloudConfigError ? (
         <PanelCard>
-          <EmptyState title="Cloud setup is incomplete" description={firebaseConfigError} />
+          <EmptyState title="Cloud setup is incomplete" description={cloudConfigError} />
         </PanelCard>
       ) : null}
 
@@ -237,10 +236,12 @@ export function AdminScreen() {
               <p className="mk-meta">Role</p>
               <p className="mk-copy">{roleLabelFor(profile.role, roleLabels)}</p>
             </div>
-            <div className="mk-subpanel mk-stack-xs">
-              <p className="mk-meta">Profile key</p>
-              <p className="mk-copy">{profile.profileKey}</p>
-            </div>
+            {profile.isSuperadmin ? (
+              <div className="mk-subpanel mk-stack-xs">
+                <p className="mk-meta">Platform role</p>
+                <p className="mk-copy">Superadmin</p>
+              </div>
+            ) : null}
             <div className="mk-subpanel mk-stack-xs">
               <p className="mk-meta">Household</p>
               <p className="mk-copy">{profile.householdId}</p>
@@ -283,7 +284,8 @@ export function AdminScreen() {
                       <h4 className="mk-subtitle">{entry.displayName}</h4>
                       <span className="mk-profile-badge">{roleLabelFor(entry.role, roleLabels)}</span>
                     </div>
-                    <p className="mk-meta">Profile key: {entry.profileKey}</p>
+                    <p className="mk-meta">Email: {entry.email || 'Not available'}</p>
+                    {entry.isSuperadmin ? <p className="mk-meta">Platform superadmin</p> : null}
                     <p className="mk-meta">Household ID: {entry.householdId}</p>
                     <p className="mk-meta">UID: {entry.uid}</p>
                     <p className="mk-meta">Last login: {entry.lastLoginAt ? formatDateString(entry.lastLoginAt) : 'Not available'}</p>
@@ -327,7 +329,7 @@ export function AdminScreen() {
 
           <PanelCard className="mk-stack-sm">
             <h3 className="mk-subtitle">Role labels</h3>
-            <p className="mk-copy">These labels are display-only. They do not change user permissions, auth guards, or Firestore rules.</p>
+            <p className="mk-copy">These labels are display-only. They do not change user permissions, auth guards, or Supabase RLS.</p>
             <label className="mk-field">
               Admin label
               <input className="mk-input" value={roleLabels.admin} onChange={(event) => setRoleLabels({ ...roleLabels, admin: event.target.value })} />
@@ -337,8 +339,8 @@ export function AdminScreen() {
               <input className="mk-input" value={roleLabels.editor} onChange={(event) => setRoleLabels({ ...roleLabels, editor: event.target.value })} />
             </label>
             <label className="mk-field">
-              Viewer label
-              <input className="mk-input" value={roleLabels.viewer} onChange={(event) => setRoleLabels({ ...roleLabels, viewer: event.target.value })} />
+              Member label
+              <input className="mk-input" value={roleLabels.member} onChange={(event) => setRoleLabels({ ...roleLabels, member: event.target.value })} />
             </label>
             <button type="button" className="mk-button mk-button-primary mk-button-pad" onClick={() => void handleSaveRoleLabels()} disabled={roleLabelSaving}>
               Save role labels

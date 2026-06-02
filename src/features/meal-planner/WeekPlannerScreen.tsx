@@ -26,7 +26,7 @@ export function WeekPlannerScreen() {
       <div className="mk-stack-sm">
         <p className="mk-eyebrow">Week planner</p>
         <h2 className="mk-section-title">Weekly meal planner</h2>
-        <p className="mk-copy">Review the whole week, then drill into any day to keep the shared Firestore plan aligned.</p>
+        <p className="mk-copy">Review the whole week, then drill into any day to keep the shared cloud plan aligned.</p>
         <div className="mk-inline-actions">
           <button
             type="button"

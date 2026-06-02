@@ -50,7 +50,7 @@ export function IngredientsScreen() {
       <ScreenHeader
         eyebrow="Ingredients"
         title="Ingredient reference"
-        description="Manage shared ingredient references, staple exclusions, and local-only images while Firestore stores the household data."
+        description="Manage shared ingredient references, staple exclusions, and local image cache while Supabase stores household data."
       />
 
       {syncMessage ? (
@@ -75,7 +75,7 @@ export function IngredientsScreen() {
               Add ingredient
             </button>
           ) : (
-            <p className="mk-meta">Viewer access is read-only. Ingredient and staple changes are disabled.</p>
+            <p className="mk-meta">Member access is read-only. Ingredient and staple changes are disabled.</p>
           )}
         </div>
         <div className="mk-stack-sm">
@@ -112,7 +112,7 @@ export function IngredientsScreen() {
 
       {loading ? (
         <PanelCard>
-          <p className="mk-meta">Loading ingredients from Firestore...</p>
+          <p className="mk-meta">Loading ingredients from Supabase...</p>
         </PanelCard>
       ) : state.ingredients.length === 0 ? (
         <PanelCard>

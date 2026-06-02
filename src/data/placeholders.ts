@@ -73,6 +73,6 @@ export const placeholderIngredients: PlaceholderIngredient[] = [
 
 export const adminHighlights = [
   'Legacy localStorage keys remain untouched for migration safety.',
-  'Firebase scaffolding is still in the repo but inactive in the route flow.',
+  'Supabase cloud sync gates the active route flow.',
   'This phase focuses on routes, layout, and placeholder data only.',
 ] as const

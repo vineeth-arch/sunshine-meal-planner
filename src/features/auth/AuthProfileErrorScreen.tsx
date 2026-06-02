@@ -15,7 +15,7 @@ export function AuthProfileErrorScreen({ error, onRetry, onSignOut }: AuthProfil
         <ScreenHeader
           eyebrow="Profile error"
           title="We couldn't load this Mom's Kitchen profile"
-          description="The Firebase account is valid, but the Firestore profile document is missing required data or couldn't be read."
+          description="The Supabase account is valid, but the profile row is missing required data or couldn't be read."
         />
         <EmptyState title="Profile access failed" description={error} />
         <div className="mk-inline-actions">

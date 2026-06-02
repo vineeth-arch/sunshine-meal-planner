@@ -62,7 +62,7 @@ export function DishesScreen() {
       <ScreenHeader
         eyebrow="Dishes"
         title="Cookbook management"
-        description="Sabjis, curries, and Gujarati dishes now load from household Firestore data after login."
+        description="Sabjis, curries, and Gujarati dishes load from household Supabase data after login."
       />
 
       {syncMessage ? (
@@ -87,7 +87,7 @@ export function DishesScreen() {
               Add dish
             </button>
           ) : (
-            <p className="mk-meta">Viewer access is read-only. Dish editing is available to editors and admins.</p>
+            <p className="mk-meta">Member access is read-only. Dish editing is available to editors and admins.</p>
           )}
           {(['all', 'sabji', 'curry', 'gujarati'] as const).map((value) => (
             <button
@@ -104,7 +104,7 @@ export function DishesScreen() {
 
       {loading ? (
         <PanelCard>
-          <p className="mk-meta">Loading dishes from Firestore...</p>
+          <p className="mk-meta">Loading dishes from Supabase...</p>
         </PanelCard>
       ) : dishes.length === 0 ? (
         <PanelCard>

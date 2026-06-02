@@ -1,19 +1,6 @@
 # Mom's Kitchen PWA
 
-Mom's Kitchen is now scaffolded as a React + Vite + TypeScript PWA with a local-first migration bridge from the original single-file app.
-
-## What Changed
-
-- The original app was preserved in [`legacy/`](/Users/vineethnair/Vibe%20Code/AI%20SESH%20WEB%20APP/legacy).
-- The active app now lives in [`src/`](/Users/vineethnair/Vibe%20Code/AI%20SESH%20WEB%20APP/src) with:
-  - typed domain models
-  - localStorage + IndexedDB adapters
-  - React tabbed meal-planning UI
-  - cookbook and pantry management
-  - JSON export/import
-  - full migration backup export including IndexedDB image blobs
-  - Firebase Auth + Firestore scaffolding
-  - Vite PWA build output for static hosting deployment
+Mom's Kitchen is a React + Vite + TypeScript PWA. Supabase is the cloud source of truth. The existing `moms_*` localStorage keys and IndexedDB image stores remain as read cache only.
 
 ## Local Development
 
@@ -30,104 +17,68 @@ npm run lint
 npm run build
 ```
 
-## Firebase Setup
+## Supabase Setup
 
-Copy `.env.example` to `.env` and fill in the public Firebase client config:
+Copy `.env.example` to `.env` and fill in the public Supabase client values:
 
 ```bash
 cp .env.example .env
 ```
 
-Required environment variables:
+Required browser-safe variables:
 
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_FIREBASE_PROJECT_ID`
-- `VITE_FIREBASE_STORAGE_BUCKET`
-- `VITE_FIREBASE_MESSAGING_SENDER_ID`
-- `VITE_FIREBASE_APP_ID`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-Firebase initialization is isolated in [`src/lib/firebase.ts`](/Users/vineethnair/Vibe%20Code/AI%20SESH%20WEB%20APP/src/lib/firebase.ts). The rest of the app remains local-first when these values are missing.
+Cloud sync requires:
 
-The app intentionally does not support storing private third-party API keys in the browser anymore. Only Firebase web app config belongs in Vite client env vars.
+- Google provider enabled in Supabase Auth.
+- Localhost and deployed origins allowed as redirect URLs.
+- Real user accounts created through Google or magic link.
+- A `profiles` row for each user with `role`, `household_id`, `is_superadmin`, `display_name`, and `email`.
 
-## Firebase Console Steps
+Bootstrap the first household and admin manually from a privileged SQL session. Do not add client-side self-elevation.
 
-1. Create or open your Firebase project in the Firebase console.
-2. Add a Web app to the project and copy its config values into your local `.env`.
-3. Enable Firebase Authentication and add the sign-in providers you plan to support later.
-4. Add your local and deployed domains to Firebase Auth authorized domains.
-5. Create a Firestore database in production or test mode, depending on your current rollout stage.
-6. Apply the repo's Firestore rules and indexes when you are ready to validate cloud sync behavior.
+```sql
+insert into public.households (name, created_by)
+values ('Mom''s Kitchen', '<user-uuid>')
+returning id;
 
-## Firestore Bootstrap
+update public.profiles
+set role = 'admin', household_id = '<household-uuid>'
+where id = '<user-uuid>';
+```
 
-Cloud sync requires a signed-in Firebase user with a `users/{uid}` profile document that already has:
+Roles:
 
-- `role: "admin"`
-- `householdId: "<existing-household-id>"`
+- `admin`: household admin, can edit and use `/admin`.
+- `editor`: can edit household data.
+- `member`: read-only.
+- `is_superadmin = true`: platform admin access for `/admin`.
 
-This first admin bootstrap is manual by design so the hosted app does not self-elevate privileges.
+## Supabase CLI
 
-## Local Testing
+```bash
+npx supabase login
+npx supabase link --project-ref fpqivcgavpmdmqszgtqq
+npx supabase migration list --linked
+npx supabase db push --linked --dry-run
+```
 
-1. Run `npm install` if dependencies are not installed yet.
-2. Leave `.env` empty or absent and run `npm run dev`.
-3. Confirm `/dashboard` and other kitchen screens still work without Firebase.
-4. Open `/login` and `/admin` and confirm they show a clear Firebase configuration message.
-5. Add valid Firebase env vars to `.env` and rerun `npm run dev`.
-6. Confirm those warnings disappear while the app still behaves as a local-first kitchen app.
+Do not run `npx supabase db push --linked` without explicit approval.
 
 ## Cloudflare Pages Deployment
-
-Deploy Mom's Kitchen to Cloudflare Pages as a static Vite app.
-
-### Deployment Checklist
-
-1. Push this repo to GitHub if it is not already there.
-2. In Cloudflare, go to Workers & Pages and create a new Pages project.
-3. Connect the GitHub repository for this app.
-4. Use the repo root as the Root directory.
-5. Set the build command to `npm run build`.
-6. Set the build output directory to `dist`.
-7. If Cloudflare asks for a framework preset, choose `Vite`. Manual settings are also fine.
-8. Add these environment variables in the Pages project settings before the first production deploy:
-   - `VITE_FIREBASE_API_KEY`
-   - `VITE_FIREBASE_AUTH_DOMAIN`
-   - `VITE_FIREBASE_PROJECT_ID`
-   - `VITE_FIREBASE_STORAGE_BUCKET`
-   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
-   - `VITE_FIREBASE_APP_ID`
-9. Deploy and note the assigned production URL in the form `https://<project>.pages.dev`.
-10. After deploy, test `/`, `/login`, and a direct refresh on `/dashboard` to confirm SPA routing works.
-
-### Cloudflare Pages Settings
 
 - Build command: `npm run build`
 - Build output directory: `dist`
 - Root directory: repo root
-- Framework preset: `Vite` if selected, otherwise configure manually
+- Framework preset: `Vite`
+- Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
-The repo includes [`public/_redirects`](/Users/vineethnair/Vibe%20Code/AI%20SESH%20WEB%20APP/public/_redirects) with:
+The repo includes `public/_redirects`:
 
 ```text
 /* /index.html 200
 ```
 
-Cloudflare Pages already has default SPA behavior when no top-level `404.html` is present, but keeping this file makes client-side routing explicit and portable across static hosts.
-
-### Firebase Settings Needed After Deployment
-
-- Add the Cloudflare production domain `<project>.pages.dev` to Firebase Authentication authorized domains.
-- If you plan to test auth flows on Cloudflare preview deployments, add the relevant preview domain(s) too.
-- Keep using only Firebase web app config in Vite client env vars.
-- Do not add any private AI key, server token, or third-party secret to Cloudflare Pages environment variables for this frontend app.
-
-### Production Verification
-
-After the first successful deploy:
-
-1. Open the production `https://<project>.pages.dev` URL.
-2. Confirm the app shell loads over HTTPS.
-3. Open `/login` and confirm Firebase auth no longer reports an unauthorized domain after the Pages domain is added in Firebase.
-4. Refresh `/dashboard` directly to confirm SPA routing resolves to the app instead of a 404.
+After deploy, add the Pages production URL and preview URLs to Supabase Auth redirect URLs, then test `/login`, `/dashboard`, `/admin`, and direct refresh on protected routes.

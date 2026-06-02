@@ -12,8 +12,8 @@ export function AuthSetupRequiredScreen({ email, onSignOut }: AuthSetupRequiredS
       <PanelCard className="mk-stack-lg mk-auth-panel">
         <ScreenHeader
           eyebrow="Setup required"
-          title="This account still needs a Firestore profile"
-          description={`Signed in${email ? ` as ${email}` : ''}, but no users/{uid} document was found. Create the Firestore profile for this account, then sign in again.`}
+          title="This account still needs a Supabase profile"
+          description={`Signed in${email ? ` as ${email}` : ''}, but no profiles row was found. Bootstrap this account's role and household, then sign in again.`}
         />
         <div className="mk-inline-actions">
           <button type="button" className="mk-button mk-button-secondary mk-button-pad" onClick={() => void onSignOut()}>

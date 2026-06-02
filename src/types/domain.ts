@@ -1,8 +1,6 @@
-import type { Timestamp } from 'firebase/firestore'
-
 export type DishCategory = 'sabji' | 'curry' | 'gujarati'
-export type UserRole = 'admin' | 'editor' | 'viewer'
-export type ProfileKey = 'admin' | 'mom' | 'dad' | 'guest'
+export type UserRole = 'admin' | 'editor' | 'member'
+export type CloudTimestamp = string
 
 export interface Dish {
   id: string
@@ -157,27 +155,28 @@ export interface UserProfile {
   uid: string
   role: UserRole
   householdId: string
-  profileKey: ProfileKey
+  isSuperadmin: boolean
   displayName: string
-  createdAt: Timestamp
-  updatedAt: Timestamp
-  lastLoginAt?: Timestamp | null
+  email: string
+  createdAt: CloudTimestamp
+  updatedAt: CloudTimestamp
+  lastLoginAt?: CloudTimestamp | null
 }
 
 export interface Household {
   id: string
   name: string
   ownerUid: string
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  createdAt: CloudTimestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface HouseholdDocument {
   id: string
   name: string
   ownerUid: string
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  createdAt: CloudTimestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface DishDocument {
@@ -192,8 +191,8 @@ export interface DishDocument {
   imageUrl: string
   createdBy: string
   updatedBy: string
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  createdAt: CloudTimestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface CreateDishInput {
@@ -228,8 +227,8 @@ export interface IngredientDocument {
   imageUrl: string
   createdBy: string
   updatedBy: string
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  createdAt: CloudTimestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface CreateIngredientInput {
@@ -258,7 +257,7 @@ export interface PantryItemDocument {
   unit: string
   status: string
   updatedBy: string
-  updatedAt: Timestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface UpsertPantryItemInput {
@@ -275,8 +274,8 @@ export interface StapleDocument {
   name: string
   createdBy: string
   updatedBy: string
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  createdAt: CloudTimestamp
+  updatedAt: CloudTimestamp
 }
 
 export type KitchenSyncState = 'idle' | 'saving' | 'saved' | 'failed'
@@ -312,8 +311,8 @@ export interface WeeklyPlanDocument {
   weekStart: string
   createdBy: string
   updatedBy: string
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  createdAt: CloudTimestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface MealSlotDocument {
@@ -325,7 +324,7 @@ export interface MealSlotDocument {
   position: number
   notes: string
   updatedBy: string
-  updatedAt: Timestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface UpdateMealSlotInput {
@@ -342,7 +341,7 @@ export interface HouseholdSettingsDocument {
   schemaVersion: number
   regionPreferences: string[]
   enabledMealTypes: MealName[]
-  updatedAt: Timestamp
+  updatedAt: CloudTimestamp
   roleLabels?: Partial<Record<UserRole, string>>
 }
 
@@ -358,7 +357,7 @@ export interface AdminRecentChange {
   collection: 'dishes' | 'ingredients' | 'staples' | 'pantryItems' | 'weeklyPlans' | 'mealSlots'
   label: string
   updatedBy: string
-  updatedAt: Timestamp
+  updatedAt: CloudTimestamp
 }
 
 export interface AdminDataCounts {
@@ -371,15 +370,16 @@ export interface AdminDataCounts {
 export interface AdminRoleLabels {
   admin: string
   editor: string
-  viewer: string
+  member: string
 }
 
 export interface AdminBackupUserProfile {
   uid: string
   role: UserRole
   householdId: string
-  profileKey: ProfileKey
+  isSuperadmin: boolean
   displayName: string
+  email: string
   createdAt: string
   updatedAt: string
   lastLoginAt?: string | null

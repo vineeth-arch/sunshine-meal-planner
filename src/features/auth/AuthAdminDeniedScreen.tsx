@@ -12,7 +12,7 @@ export function AuthAdminDeniedScreen() {
         <ScreenHeader
           eyebrow="Access denied"
           title="This admin dashboard is locked"
-          description="Only Mom's Kitchen admin accounts can open household controls, backup tools, and role label settings."
+          description="Only admin or platform superadmin accounts can open household controls, backup tools, and role label settings."
         />
         <EmptyState
           title="Your account is not an admin"

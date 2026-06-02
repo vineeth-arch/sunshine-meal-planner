@@ -1,24 +1,28 @@
-import { FirebaseError } from 'firebase/app'
+import { AuthError } from '@supabase/supabase-js'
 
 export function getFriendlyAuthErrorMessage(error: unknown) {
-  if (error instanceof FirebaseError) {
+  if (error instanceof AuthError) {
     switch (error.code) {
-      case 'auth/invalid-credential':
-      case 'auth/wrong-password':
-        return 'That password does not match this profile. Please try again.'
-      case 'auth/user-not-found':
-      case 'auth/invalid-login-credentials':
-        return 'This profile account is not available yet. Create it first in Firebase Console, then try again.'
-      case 'auth/network-request-failed':
-        return 'We could not reach Firebase. Check your internet connection and try again.'
-      case 'auth/api-key-not-valid':
-      case 'auth/app-not-authorized':
-      case 'auth/invalid-api-key':
-      case 'auth/operation-not-allowed':
-        return 'Firebase is not configured correctly for this app yet. Check your Firebase project settings and enabled sign-in methods.'
+      case 'invalid_credentials':
+      case 'bad_jwt':
+      case 'invalid_jwt':
+      case 'session_not_found':
+        return 'Your cloud session is no longer valid. Sign in again.'
+      case 'email_provider_disabled':
+      case 'oauth_provider_not_supported':
+      case 'provider_disabled':
+      case 'validation_failed':
+        return 'Supabase sign-in is not configured correctly yet. Check enabled providers and redirect URLs.'
+      case 'over_email_send_rate_limit':
+      case 'over_request_rate_limit':
+        return 'Too many sign-in attempts. Wait a moment, then try again.'
       default:
         return error.message || 'We could not sign you in right now. Please try again.'
     }
+  }
+
+  if (error instanceof TypeError) {
+    return 'We could not reach cloud sync. Check your internet connection and try again.'
   }
 
   if (error instanceof Error) return error.message

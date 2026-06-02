@@ -1,18 +1,7 @@
-import type { User } from 'firebase/auth'
-import {
-  collection,
-  doc,
-  getDoc,
-  getFirestore,
-  type CollectionReference,
-  type DocumentData,
-  type DocumentReference,
-  type Timestamp,
-} from 'firebase/firestore'
+import type { User } from '@supabase/supabase-js'
 
-import { getFirebaseApp } from '../../lib/firebase'
 import { canEdit } from '../../features/auth/access'
-import { getFriendlyFirebaseDataErrorMessage } from '../../lib/firebase/error-messages'
+import { requireSupabase } from '../../lib/supabase'
 import type {
   AdminRoleLabels,
   DayKey,
@@ -24,39 +13,60 @@ import type {
   WeeklyPlanDocument,
 } from '../../types/domain'
 
-export interface FirestoreServiceContext {
+export interface CloudServiceContext {
   user: User | null
   profile: UserProfile | null
-}
-
-type HouseholdCollections = {
-  dishes: CollectionReference<DocumentData>
-  ingredients: CollectionReference<DocumentData>
-  staples: CollectionReference<DocumentData>
-  pantryItems: CollectionReference<DocumentData>
-  weeklyPlans: CollectionReference<DocumentData>
-  settings: CollectionReference<DocumentData>
 }
 
 export interface HouseholdAccess {
   user: User
   profile: UserProfile
   householdId: string
-  householdRef: DocumentReference<DocumentData>
-  collections: HouseholdCollections
 }
 
-export function getDb() {
-  const app = getFirebaseApp()
-  if (!app) {
-    throw new Error('Firebase is not configured.')
-  }
+export type JsonRecord = Record<string, unknown>
 
-  return getFirestore(app)
+export type HouseholdRow = {
+  id: string
+  name: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export type DataRow = {
+  household_id: string
+  id: string
+  data: JsonRecord | null
+  updated_at: string
+  updated_by: string | null
+}
+
+export type WeeklyPlanRow = {
+  household_id: string
+  week_start: string
+  data: JsonRecord | null
+  updated_at: string
+  updated_by: string | null
+}
+
+export type MealSlotRow = {
+  household_id: string
+  week_start: string
+  id: string
+  data: JsonRecord | null
+  updated_at: string
+  updated_by: string | null
+}
+
+export type SettingsRow = {
+  household_id: string
+  data: JsonRecord | null
+  updated_at: string
+  updated_by: string | null
 }
 
 export function requireHouseholdAccess(
-  context: FirestoreServiceContext,
+  context: CloudServiceContext,
   options: { requireEdit?: boolean } = {},
 ): HouseholdAccess {
   if (!context.user) {
@@ -64,7 +74,7 @@ export function requireHouseholdAccess(
   }
 
   if (!context.profile) {
-    throw new Error('A Firestore user profile is required.')
+    throw new Error('A Supabase profile is required.')
   }
 
   const householdId = context.profile.householdId.trim()
@@ -72,26 +82,20 @@ export function requireHouseholdAccess(
     throw new Error('A household ID is required.')
   }
 
-  if (options.requireEdit && !canEdit(context.profile)) {
-    throw new Error('This profile does not have permission to edit household data.')
-  }
+  if (options.requireEdit) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      throw new Error('Connect to edit.')
+    }
 
-  const db = getDb()
-  const householdRef = doc(db, 'households', householdId)
+    if (!canEdit(context.profile)) {
+      throw new Error('Connect to edit. This profile is read-only.')
+    }
+  }
 
   return {
     user: context.user,
     profile: context.profile,
     householdId,
-    householdRef,
-    collections: {
-      dishes: collection(householdRef, 'dishes'),
-      ingredients: collection(householdRef, 'ingredients'),
-      staples: collection(householdRef, 'staples'),
-      pantryItems: collection(householdRef, 'pantryItems'),
-      weeklyPlans: collection(householdRef, 'weeklyPlans'),
-      settings: collection(householdRef, 'settings'),
-    },
   }
 }
 
@@ -149,10 +153,16 @@ export function sortMealSlots(slots: MealSlotDocument[]): MealSlotDocument[] {
   })
 }
 
-export function withServiceError<T>(action: string, operation: () => Promise<T>): Promise<T> {
-  return operation().catch((caught: unknown) => {
-    throw new Error(getFriendlyFirebaseDataErrorMessage(action, caught))
-  })
+export async function withServiceError<T>(action: string, operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation()
+  } catch (caught) {
+    if (caught instanceof Error) {
+      throw new Error(`${action}: ${caught.message}`, { cause: caught })
+    }
+
+    throw new Error(`${action}.`, { cause: caught })
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -169,22 +179,16 @@ export function asString(value: unknown, fieldName: string): string {
   throw new Error(`${fieldName} is required.`)
 }
 
-export function asOptionalString(value: unknown, fieldName: string): string {
+export function asOptionalString(value: unknown, fieldName?: string): string {
+  void fieldName
   if (value === undefined || value === null) return ''
   if (typeof value === 'string') return value
-  throw new Error(`${fieldName} must be a string.`)
+  return String(value)
 }
 
-export function asTimestamp(value: unknown, fieldName: string): Timestamp {
-  const timestampName = value && typeof value === 'object' && 'constructor' in value
-    ? (value.constructor as { name?: string }).name
-    : undefined
-
-  if (timestampName === 'Timestamp') {
-    return value as Timestamp
-  }
-
-  throw new Error(`${fieldName} must be a Firestore timestamp.`)
+export function asTimestamp(value: unknown, fieldName: string): string {
+  if (typeof value === 'string' && value.trim()) return value
+  throw new Error(`${fieldName} must be an ISO timestamp.`)
 }
 
 export function asDishCategory(value: unknown): DishCategory {
@@ -239,7 +243,7 @@ export function asOptionalRoleLabels(value: unknown): Partial<AdminRoleLabels> |
 
   if (typeof record.admin === 'string') result.admin = record.admin
   if (typeof record.editor === 'string') result.editor = record.editor
-  if (typeof record.viewer === 'string') result.viewer = record.viewer
+  if (typeof record.member === 'string') result.member = record.member
 
   return result
 }
@@ -249,61 +253,94 @@ export function asSchemaVersion(value: unknown): number {
   throw new Error('schemaVersion must be a non-negative integer.')
 }
 
-export function mealSlotsCollection(planRef: DocumentReference<DocumentData>) {
-  return collection(planRef, 'mealSlots')
+export async function selectRows<T extends { household_id: string }>(
+  table: string,
+  householdId: string,
+): Promise<T[]> {
+  const { data, error } = await requireSupabase()
+    .from(table)
+    .select('*')
+    .eq('household_id', householdId)
+
+  if (error) throw error
+  return (data ?? []) as T[]
 }
 
-export async function readRequiredDoc<T>(
-  ref: DocumentReference<DocumentData>,
-  mapper: (id: string, data: unknown) => T,
-  notFoundMessage: string,
+export async function selectRow<T>(
+  table: string,
+  filters: Record<string, string>,
+): Promise<T | null> {
+  let query = requireSupabase().from(table).select('*')
+  Object.entries(filters).forEach(([key, value]) => {
+    query = query.eq(key, value)
+  })
+
+  const { data, error } = await query.maybeSingle()
+  if (error) throw error
+  return data as T | null
+}
+
+export async function upsertRow<T>(
+  table: string,
+  row: Record<string, unknown>,
 ): Promise<T> {
-  const snapshot = await getDoc(ref)
-  if (!snapshot.exists()) {
-    throw new Error(notFoundMessage)
-  }
+  const { data, error } = await requireSupabase()
+    .from(table)
+    .upsert(row)
+    .select('*')
+    .single()
 
-  return mapper(snapshot.id, snapshot.data())
+  if (error) throw error
+  return data as T
 }
 
-export function mapWeeklyPlanDocument(id: string, data: unknown): WeeklyPlanDocument {
-  const record = asRecord(data, 'Weekly plan data')
+export async function deleteRows(table: string, filters: Record<string, string>): Promise<void> {
+  let query = requireSupabase().from(table).delete()
+  Object.entries(filters).forEach(([key, value]) => {
+    query = query.eq(key, value)
+  })
 
-  return {
-    id,
-    weekStart: asString(record.weekStart, 'weekStart'),
-    createdBy: asString(record.createdBy, 'createdBy'),
-    updatedBy: asString(record.updatedBy, 'updatedBy'),
-    createdAt: asTimestamp(record.createdAt, 'createdAt'),
-    updatedAt: asTimestamp(record.updatedAt, 'updatedAt'),
-  }
+  const { error } = await query
+  if (error) throw error
 }
 
-export function mapMealSlotDocument(id: string, data: unknown): MealSlotDocument {
-  const record = asRecord(data, 'Meal slot data')
-
+export function mapWeeklyPlanDocument(row: WeeklyPlanRow): WeeklyPlanDocument {
   return {
-    id,
-    day: asDayKey(record.day),
-    mealType: asMealName(record.mealType),
-    slotType: asString(record.slotType, 'slotType'),
-    dishId: asString(record.dishId, 'dishId'),
-    position: asNumber(record.position, 'position'),
-    notes: asOptionalString(record.notes, 'notes'),
-    updatedBy: asString(record.updatedBy, 'updatedBy'),
-    updatedAt: asTimestamp(record.updatedAt, 'updatedAt'),
+    id: row.week_start,
+    weekStart: row.week_start,
+    createdBy: asOptionalString(row.data?.createdBy, 'createdBy') || row.updated_by || '',
+    updatedBy: row.updated_by || asOptionalString(row.data?.updatedBy, 'updatedBy'),
+    createdAt: asTimestamp(row.data?.createdAt ?? row.updated_at, 'createdAt'),
+    updatedAt: asTimestamp(row.updated_at, 'updatedAt'),
   }
 }
 
-export function mapHouseholdSettingsDocument(id: string, data: unknown): HouseholdSettingsDocument {
-  const record = asRecord(data, 'Household settings data')
+export function mapMealSlotDocument(row: MealSlotRow): MealSlotDocument {
+  const data = asRecord(row.data ?? {}, 'Meal slot data')
 
   return {
-    id: id as 'app',
-    schemaVersion: asSchemaVersion(record.schemaVersion),
-    regionPreferences: asStringArray(record.regionPreferences, 'regionPreferences'),
-    enabledMealTypes: asStringArray(record.enabledMealTypes, 'enabledMealTypes').map((value) => asMealName(value)),
-    updatedAt: asTimestamp(record.updatedAt, 'updatedAt'),
-    roleLabels: asOptionalRoleLabels(record.roleLabels),
+    id: row.id,
+    day: asDayKey(data.day),
+    mealType: asMealName(data.mealType),
+    slotType: asString(data.slotType, 'slotType'),
+    dishId: asString(data.dishId, 'dishId'),
+    position: asNumber(data.position, 'position'),
+    notes: asOptionalString(data.notes, 'notes'),
+    updatedBy: row.updated_by || asOptionalString(data.updatedBy, 'updatedBy'),
+    updatedAt: asTimestamp(row.updated_at, 'updatedAt'),
+  }
+}
+
+export function mapHouseholdSettingsDocument(row: SettingsRow | null): HouseholdSettingsDocument | null {
+  if (!row) return null
+  const data = asRecord(row.data ?? {}, 'Household settings')
+
+  return {
+    id: 'app',
+    schemaVersion: asSchemaVersion(data.schemaVersion ?? 1),
+    regionPreferences: asStringArray(data.regionPreferences ?? [], 'regionPreferences'),
+    enabledMealTypes: asStringArray(data.enabledMealTypes ?? ['breakfast', 'lunch', 'dinner'], 'enabledMealTypes') as MealName[],
+    updatedAt: asTimestamp(row.updated_at, 'updatedAt'),
+    roleLabels: asOptionalRoleLabels(data.roleLabels),
   }
 }

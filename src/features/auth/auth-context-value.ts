@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import type { User } from 'firebase/auth'
+import type { Session, User } from '@supabase/supabase-js'
 
 import type { UserProfile } from '../../types/domain'
 
@@ -9,10 +9,12 @@ export interface AuthContextValue {
   enabled: boolean
   loading: boolean
   user: User | null
+  session: Session | null
   profile: UserProfile | null
   error: string | null
   profileState: AuthProfileState
-  signIn(email: string, password: string): Promise<void>
+  signInWithGoogle(): Promise<void>
+  signInWithMagicLink(email: string): Promise<void>
   signOutUser(): Promise<void>
   refreshProfile(): Promise<void>
 }

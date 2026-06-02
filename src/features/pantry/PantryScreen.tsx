@@ -35,7 +35,7 @@ export function PantryScreen() {
       <ScreenHeader
         eyebrow="Pantry"
         title="Shared pantry"
-        description="Pantry inventory, ingredient suggestions, and fridge planning now read from household Firestore data."
+        description="Pantry inventory, ingredient suggestions, and fridge planning read from household cloud data."
       />
 
       {syncMessage ? (
@@ -55,7 +55,7 @@ export function PantryScreen() {
 
       {loading ? (
         <PanelCard>
-          <p className="mk-meta">Loading pantry from Firestore...</p>
+          <p className="mk-meta">Loading pantry from Supabase...</p>
         </PanelCard>
       ) : null}
 
@@ -79,7 +79,7 @@ export function PantryScreen() {
             Generate plan
           </button>
         </div>
-        {!allowEdit ? <p className="mk-meta">Viewer access is read-only. Pantry suggestions still work, but plan generation is disabled.</p> : null}
+        {!allowEdit ? <p className="mk-meta">Member access is read-only. Pantry suggestions still work, but plan generation is disabled.</p> : null}
 
         <label className="mk-check-card">
           <input type="checkbox" checked={includeGujarati} onChange={(event) => setIncludeGujarati(event.target.checked)} />

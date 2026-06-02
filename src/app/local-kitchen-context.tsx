@@ -30,7 +30,6 @@ import {
   getDishById,
   getOverlappingDishes,
   loadKitchenState,
-  persistIntegrations,
   suggestDishesFromIngredients,
   syncIngredientsFromRepo,
   updateMealSlot,
@@ -56,19 +55,20 @@ import {
   readRawStorageValue,
 } from '../services/local/localStorageService'
 import { listDishImagesAsDataUrls, listIngredientImagesAsDataUrls } from '../services/local/imageStore'
-import { canEdit, isAdmin } from '../features/auth/access'
+import { canEdit, isAdmin, isSuperadmin } from '../features/auth/access'
 import { isMockAuthEnabled } from '../features/auth/test-auth'
-import { getDishes, createDish, deleteDish as deleteDishDocument, updateDish } from '../services/firestore/dishes'
+import { isCloudConfigured } from '../lib/supabase'
+import { getDishes, createDish, deleteDish as deleteDishDocument, updateDish } from '../services/supabase/dishes'
 import {
   createIngredient,
   deleteIngredient as deleteIngredientDocument,
   getIngredientId,
   getIngredients,
   updateIngredient,
-} from '../services/firestore/ingredients'
-import { deletePantryItem, getPantryItems, upsertPantryItem } from '../services/firestore/pantry'
-import { deleteStaple, getStaples, getStapleId, upsertStaple } from '../services/firestore/staples'
-import { buildWeeklyPlanFromSlots, getWeeklyPlan, saveWeeklyPlan } from '../services/firestore/weeklyPlans'
+} from '../services/supabase/ingredients'
+import { deletePantryItem, getPantryItems, upsertPantryItem } from '../services/supabase/pantry'
+import { deleteStaple, getStaples, getStapleId, upsertStaple } from '../services/supabase/staples'
+import { buildWeeklyPlanFromSlots, getWeeklyPlan, saveWeeklyPlan } from '../services/supabase/weeklyPlans'
 import { getWeekStartDate } from '../lib/date/plans'
 
 type DishDraft = Omit<Dish, 'id'> & { id?: string }
@@ -196,7 +196,7 @@ function persistCache(state: LocalKitchenState) {
   persistLastWeekPlan(state.lastWeekPlan)
 }
 
-function mapFirestoreDishToDomain(dish: Awaited<ReturnType<typeof getDishes>>[number]): Dish {
+function mapCloudDishToDomain(dish: Awaited<ReturnType<typeof getDishes>>[number]): Dish {
   return {
     id: dish.id,
     name: dish.name,
@@ -211,7 +211,7 @@ function mapFirestoreDishToDomain(dish: Awaited<ReturnType<typeof getDishes>>[nu
   }
 }
 
-function mapFirestoreIngredientToDomain(ingredient: Awaited<ReturnType<typeof getIngredients>>[number]): Ingredient {
+function mapCloudIngredientToDomain(ingredient: Awaited<ReturnType<typeof getIngredients>>[number]): Ingredient {
   return {
     name: ingredient.name,
     emoji: ingredient.emoji,
@@ -231,7 +231,21 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const saveTimeoutRef = useRef<number | null>(null)
   const canEditData = canEdit(auth.profile)
-  const canImportExport = isAdmin(auth.profile)
+  const canImportExport = isAdmin(auth.profile) || isSuperadmin(auth.profile)
+
+  const requireWriteAccess = useCallback(() => {
+    if (!isCloudConfigured() || !auth.user || !auth.profile) {
+      throw new Error('Connect to edit.')
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      throw new Error('Connect to edit.')
+    }
+
+    if (!canEdit(auth.profile)) {
+      throw new Error('Connect to edit. This profile is read-only.')
+    }
+  }, [auth.profile, auth.user])
 
   const setSavedState = useCallback((message: string) => {
     setSyncState('saved')
@@ -253,6 +267,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }, [])
 
   const runWrite = useCallback(async <T,>(message: string, operation: () => Promise<T>) => {
+    requireWriteAccess()
     setSyncState('saving')
     setSyncMessage('Saving...')
 
@@ -264,7 +279,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
       setFailedState(caught instanceof Error ? caught.message : 'Save failed.')
       throw caught
     }
-  }, [setFailedState, setSavedState])
+  }, [requireWriteAccess, setFailedState, setSavedState])
 
   const replaceState = useCallback((nextState: LocalKitchenState, options?: { persist?: boolean }) => {
     setState(nextState)
@@ -288,9 +303,9 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
       getWeeklyPlan(context, weekStart),
     ])
 
-    const nextRepo = dishes.map(mapFirestoreDishToDomain)
+    const nextRepo = dishes.map(mapCloudDishToDomain)
     const nextStaples = staples.map((item) => item.name)
-    const nextIngredients = ingredients.map(mapFirestoreIngredientToDomain)
+    const nextIngredients = ingredients.map(mapCloudIngredientToDomain)
     const nextPlan = buildWeeklyPlanFromSlots(
       weekStart,
       weeklyPlan.mealSlots,
@@ -314,7 +329,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }, [auth.profile, auth.user, replaceState, state])
 
   const refreshData = useCallback(async () => {
-    if (mockAuthEnabled || !auth.user || !auth.profile) {
+    if (mockAuthEnabled || !isCloudConfigured() || !auth.user || !auth.profile) {
       setLoading(false)
       return
     }
@@ -351,7 +366,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }, [])
 
   const savePlan = useCallback(async (nextPlan: WeeklyPlan) => {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     await runWrite('Saved meal plan.', async () => {
       await saveWeeklyPlan({ user: auth.user, profile: auth.profile }, nextPlan)
@@ -364,9 +379,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
     const existing = new Set(ingredients.map((item) => item.name.toLowerCase()))
     const missing = syncedIngredients.filter((item) => !existing.has(item.name.toLowerCase()))
 
-    if (!auth.user || !auth.profile) {
-      return syncedIngredients
-    }
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     for (const ingredient of missing) {
       await createIngredient(
@@ -386,7 +399,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }, [auth.profile, auth.user])
 
   async function saveDishAction(draft: DishDraft, imageFile?: File | null, removeLocalImage = false) {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     const existing = draft.id ? state.repo.find((dish) => dish.id === draft.id) ?? null : null
     const nextDish = normalizeDishDraft(draft, existing)
@@ -445,7 +458,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }
 
   async function deleteDishAction(id: string) {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     await runWrite('Deleted dish.', async () => {
       await deleteDishDocument({ user: auth.user, profile: auth.profile }, id)
@@ -456,7 +469,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }
 
   async function saveIngredientAction(draft: IngredientDraft, imageFile?: File | null, removeLocalImage = false) {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     const nextIngredient = normalizeIngredientDraft(draft)
     const previousName = draft.previousName?.trim()
@@ -523,7 +536,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }
 
   async function deleteIngredientAction(name: string) {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     await runWrite('Deleted ingredient.', async () => {
       await deleteIngredientDocument({ user: auth.user, profile: auth.profile }, getIngredientId(name))
@@ -539,7 +552,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }
 
   async function addStapleAction(name: string) {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
     const normalized = name.trim().toLowerCase()
     if (!normalized || state.staples.includes(normalized)) return
 
@@ -555,7 +568,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }
 
   async function removeStapleAction(name: string) {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     await runWrite('Deleted staple.', async () => {
       await deleteStaple({ user: auth.user, profile: auth.profile }, name)
@@ -570,7 +583,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }
 
   async function updatePantryItemAction(item: PantryItem) {
-    if (!auth.user || !auth.profile) return
+    if (!auth.user || !auth.profile) throw new Error('Connect to edit.')
 
     await runWrite('Saved pantry item.', async () => {
       await upsertPantryItem(
@@ -624,7 +637,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
   }
 
   function setIntegrations(integrations: Integrations) {
-    persistIntegrations(integrations)
+    requireWriteAccess()
     replaceState({
       ...state,
       integrations,
@@ -632,14 +645,14 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
     }, { persist: false })
   }
 
-  async function importPayloadToFirestore(
+  async function importPayloadToCloud(
     repo: Dish[],
     ingredients: Ingredient[],
     staples: Staple[],
     plan?: WeeklyPlan | null,
   ) {
     if (!auth.user || !auth.profile) {
-      throw new Error('Signed-in profile required.')
+      throw new Error('Connect to edit.')
     }
 
     const existingDishIds = new Set(state.repo.map((dish) => dish.id))
@@ -653,7 +666,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
     let stapleAdd = 0
     let stapleUpd = 0
 
-    await runWrite('Imported data to Firestore.', async () => {
+    await runWrite('Imported data to cloud.', async () => {
       for (const dish of repo) {
         const exists = existingDishIds.has(dish.id)
         await (exists
@@ -761,7 +774,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
 
   async function importJson(text: string) {
     const payload = parseImportPayload(text)
-    return importPayloadToFirestore(payload.sabjis, payload.ingredients, payload.staples)
+    return importPayloadToCloud(payload.sabjis, payload.ingredients, payload.staples)
   }
 
   async function runFridgePlan(available: string[], includeGujarati: boolean) {
@@ -809,7 +822,7 @@ export function LocalKitchenProvider({ children }: PropsWithChildren) {
     }
 
     try {
-      const stats = await importPayloadToFirestore(
+      const stats = await importPayloadToCloud(
         preview.dishes,
         preview.ingredients,
         preview.staples,

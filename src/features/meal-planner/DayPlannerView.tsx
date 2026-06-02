@@ -116,7 +116,7 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
 
       {loading ? (
         <PanelCard>
-          <p className="mk-meta">Loading this week's Firestore plan...</p>
+          <p className="mk-meta">Loading this week's cloud plan...</p>
         </PanelCard>
       ) : null}
 
@@ -127,7 +127,7 @@ export function DayPlannerView({ day, eyebrow, title, description, extraActions 
           </button>
           {allowEdit ? extraActions : null}
         </div>
-        {!allowEdit ? <p className="mk-meta">Viewer access is read-only. Meal plan changes are disabled.</p> : null}
+        {!allowEdit ? <p className="mk-meta">Member access is read-only. Connect with edit access to change meal plans.</p> : null}
       </PanelCard>
 
       {SLOT_CONFIGS.map((slot) => {

@@ -1,5 +1,3 @@
-import { deleteDoc, doc, getDoc, getDocs, serverTimestamp, writeBatch } from 'firebase/firestore'
-
 import { createEmptyWeekDays } from '../../lib/date/plans'
 import type {
   MealSlotDocument,
@@ -8,15 +6,20 @@ import type {
 } from '../../types/domain'
 import {
   buildMealSlotId,
+  deleteRows,
   mapMealSlotDocument,
   mapWeeklyPlanDocument,
-  mealSlotsCollection,
   normalizeWeekStartKey,
   requireHouseholdAccess,
+  selectRow,
+  selectRows,
   sortMealSlots,
+  upsertRow,
   withServiceError,
-  type FirestoreServiceContext,
-} from './firestoreDataService'
+  type CloudServiceContext,
+  type MealSlotRow,
+  type WeeklyPlanRow,
+} from './supabaseDataService'
 
 export interface WeeklyPlanWithSlots {
   plan: WeeklyPlanDocument | null
@@ -42,20 +45,26 @@ const SLOT_ORDER = [
 ] as const
 
 export async function getWeeklyPlan(
-  context: FirestoreServiceContext,
+  context: CloudServiceContext,
   weekStart: string,
 ): Promise<WeeklyPlanWithSlots> {
   return withServiceError('Could not load weekly plan', async () => {
     const access = requireHouseholdAccess(context)
     const planId = normalizeWeekStartKey(weekStart)
-    const planRef = doc(access.collections.weeklyPlans, planId)
-    const planSnapshot = await getDoc(planRef)
-    const mealSlotsSnapshot = await getDocs(mealSlotsCollection(planRef))
+    const [planRow, slotRows] = await Promise.all([
+      selectRow<WeeklyPlanRow>('weekly_plans', {
+        household_id: access.householdId,
+        week_start: planId,
+      }),
+      selectRows<MealSlotRow>('meal_slots', access.householdId),
+    ])
 
     return {
-      plan: planSnapshot.exists() ? mapWeeklyPlanDocument(planSnapshot.id, planSnapshot.data()) : null,
+      plan: planRow ? mapWeeklyPlanDocument(planRow) : null,
       mealSlots: sortMealSlots(
-        mealSlotsSnapshot.docs.map((entry) => mapMealSlotDocument(entry.id, entry.data())),
+        slotRows
+          .filter((row) => row.week_start === planId)
+          .map(mapMealSlotDocument),
       ),
     }
   })
@@ -129,83 +138,75 @@ function collectPlanSlots(plan: WeeklyPlan): SlotSeed[] {
 }
 
 export async function saveWeeklyPlan(
-  context: FirestoreServiceContext,
+  context: CloudServiceContext,
   plan: WeeklyPlan,
 ): Promise<WeeklyPlanWithSlots> {
   return withServiceError('Could not save weekly plan', async () => {
     const access = requireHouseholdAccess(context, { requireEdit: true })
     const weekStart = normalizeWeekStartKey(plan.weekStartingDate)
-    const planRef = doc(access.collections.weeklyPlans, weekStart)
-    const existingSlots = await getDocs(mealSlotsCollection(planRef))
-    const nextSlots = collectPlanSlots(plan)
-    const batch = writeBatch(planRef.firestore)
+    const now = new Date().toISOString()
 
-    batch.set(
-      planRef,
-      {
-        weekStart,
-        createdBy: access.user.uid,
-        updatedBy: access.user.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+    await upsertRow<WeeklyPlanRow>('weekly_plans', {
+      household_id: access.householdId,
+      week_start: weekStart,
+      data: {
+        createdBy: access.user.id,
+        createdAt: now,
       },
-      { merge: true },
-    )
-
-    const nextIds = new Set<string>()
-    nextSlots.forEach((slot) => {
-      const slotId = buildMealSlotId(slot)
-      nextIds.add(slotId)
-      batch.set(
-        doc(mealSlotsCollection(planRef), slotId),
-        {
-          day: slot.day,
-          mealType: slot.mealType,
-          slotType: slot.slotType,
-          dishId: slot.dishId,
-          position: slot.position,
-          notes: '',
-          updatedBy: access.user.uid,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      )
+      updated_by: access.user.id,
     })
 
-    existingSlots.docs.forEach((entry) => {
-      if (!nextIds.has(entry.id)) {
-        batch.delete(entry.ref)
-      }
+    await deleteRows('meal_slots', {
+      household_id: access.householdId,
+      week_start: weekStart,
     })
 
-    await batch.commit()
+    await Promise.all(collectPlanSlots(plan).map((slot) => upsertRow<MealSlotRow>('meal_slots', {
+      household_id: access.householdId,
+      week_start: weekStart,
+      id: buildMealSlotId(slot),
+      data: {
+        day: slot.day,
+        mealType: slot.mealType,
+        slotType: slot.slotType,
+        dishId: slot.dishId,
+        position: slot.position,
+        notes: '',
+        updatedBy: access.user.id,
+      },
+      updated_by: access.user.id,
+    })))
+
     return getWeeklyPlan(context, weekStart)
   })
 }
 
-export async function deleteWeeklyPlan(context: FirestoreServiceContext, weekStart: string): Promise<void> {
+export async function deleteWeeklyPlan(context: CloudServiceContext, weekStart: string): Promise<void> {
   return withServiceError('Could not clear weekly plan', async () => {
     const access = requireHouseholdAccess(context, { requireEdit: true })
     const planId = normalizeWeekStartKey(weekStart)
-    const planRef = doc(access.collections.weeklyPlans, planId)
-    const existingSlots = await getDocs(mealSlotsCollection(planRef))
-    const batch = writeBatch(planRef.firestore)
-
-    existingSlots.docs.forEach((entry) => batch.delete(entry.ref))
-    batch.delete(planRef)
-
-    await batch.commit()
+    await deleteRows('meal_slots', {
+      household_id: access.householdId,
+      week_start: planId,
+    })
+    await deleteRows('weekly_plans', {
+      household_id: access.householdId,
+      week_start: planId,
+    })
   })
 }
 
 export async function deleteMealSlotDocument(
-  context: FirestoreServiceContext,
+  context: CloudServiceContext,
   weekStart: string,
   slotId: string,
 ): Promise<void> {
   return withServiceError('Could not delete meal slot', async () => {
     const access = requireHouseholdAccess(context, { requireEdit: true })
-    const planRef = doc(access.collections.weeklyPlans, normalizeWeekStartKey(weekStart))
-    await deleteDoc(doc(mealSlotsCollection(planRef), slotId))
+    await deleteRows('meal_slots', {
+      household_id: access.householdId,
+      week_start: normalizeWeekStartKey(weekStart),
+      id: slotId,
+    })
   })
 }

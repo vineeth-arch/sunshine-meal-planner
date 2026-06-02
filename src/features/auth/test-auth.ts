@@ -1,49 +1,45 @@
-import type { User } from 'firebase/auth'
-import type { Timestamp } from 'firebase/firestore'
+import type { Session, User } from '@supabase/supabase-js'
 
 import type { AuthContextValue } from './auth-context-value'
-import type { ProfileKey, UserProfile, UserRole } from '../../types/domain'
+import type { UserProfile, UserRole } from '../../types/domain'
 
 export const TEST_AUTH_STORAGE_KEY = 'mk:e2e-auth-state'
 
-export type MockAuthState = 'logged-out' | 'admin' | 'editor' | 'viewer'
+export type MockAuthState = 'logged-out' | 'admin' | 'editor' | 'member'
 
 type MockProfileSeed = {
   displayName: string
   email: string
-  profileKey: ProfileKey
   role: UserRole
+  isSuperadmin?: boolean
 }
 
 const MOCK_PROFILES: Record<Exclude<MockAuthState, 'logged-out'>, MockProfileSeed> = {
   admin: {
     displayName: 'Admin',
-    email: 'admin@moms-kitchen.local',
-    profileKey: 'admin',
+    email: 'admin@example.test',
     role: 'admin',
   },
   editor: {
     displayName: 'Mom',
-    email: 'mom@moms-kitchen.local',
-    profileKey: 'mom',
+    email: 'editor@example.test',
     role: 'editor',
   },
-  viewer: {
-    displayName: 'Guest',
-    email: 'guest@moms-kitchen.local',
-    profileKey: 'guest',
-    role: 'viewer',
+  member: {
+    displayName: 'Member',
+    email: 'member@example.test',
+    role: 'member',
   },
 }
 
-const FALLBACK_TIMESTAMP = null as unknown as Timestamp
+const FALLBACK_TIMESTAMP = '2026-01-01T00:00:00.000Z'
 
 export function isMockAuthEnabled() {
   return import.meta.env.VITE_E2E_AUTH_MODE === 'mock'
 }
 
 export function isMockAuthState(value: string | null | undefined): value is MockAuthState {
-  return value === 'logged-out' || value === 'admin' || value === 'editor' || value === 'viewer'
+  return value === 'logged-out' || value === 'admin' || value === 'editor' || value === 'member'
 }
 
 export function readMockAuthState(): MockAuthState {
@@ -60,7 +56,18 @@ export function readMockAuthState(): MockAuthState {
 }
 
 function buildMockUser(email: string, uid: string): User {
-  return { email, uid } as User
+  return { email, id: uid } as User
+}
+
+function buildMockSession(user: User): Session {
+  return {
+    access_token: 'mock-access-token',
+    refresh_token: 'mock-refresh-token',
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    token_type: 'bearer',
+    user,
+  } as Session
 }
 
 function buildMockProfile(state: Exclude<MockAuthState, 'logged-out'>): UserProfile {
@@ -70,19 +77,21 @@ function buildMockProfile(state: Exclude<MockAuthState, 'logged-out'>): UserProf
     uid: `${state}-uid`,
     role: seed.role,
     householdId: 'mock-household',
-    profileKey: seed.profileKey,
+    isSuperadmin: seed.isSuperadmin === true,
     displayName: seed.displayName,
+    email: seed.email,
     createdAt: FALLBACK_TIMESTAMP,
     updatedAt: FALLBACK_TIMESTAMP,
     lastLoginAt: FALLBACK_TIMESTAMP,
   }
 }
 
-export function buildMockAuthSnapshot(state: MockAuthState): Pick<AuthContextValue, 'loading' | 'user' | 'profile' | 'error' | 'profileState'> {
+export function buildMockAuthSnapshot(state: MockAuthState): Pick<AuthContextValue, 'loading' | 'user' | 'session' | 'profile' | 'error' | 'profileState'> {
   if (state === 'logged-out') {
     return {
       loading: false,
       user: null,
+      session: null,
       profile: null,
       error: null,
       profileState: 'idle',
@@ -90,10 +99,12 @@ export function buildMockAuthSnapshot(state: MockAuthState): Pick<AuthContextVal
   }
 
   const profile = buildMockProfile(state)
+  const user = buildMockUser(MOCK_PROFILES[state].email, profile.uid)
 
   return {
     loading: false,
-    user: buildMockUser(MOCK_PROFILES[state].email, profile.uid),
+    user,
+    session: buildMockSession(user),
     profile,
     error: null,
     profileState: 'ready',
@@ -103,7 +114,7 @@ export function buildMockAuthSnapshot(state: MockAuthState): Pick<AuthContextVal
 export function resolveMockStateForEmail(email: string): MockAuthState {
   const normalizedEmail = email.trim().toLowerCase()
   if (normalizedEmail === MOCK_PROFILES.admin.email) return 'admin'
-  if (normalizedEmail === MOCK_PROFILES.viewer.email) return 'viewer'
+  if (normalizedEmail === MOCK_PROFILES.member.email) return 'member'
   return 'editor'
 }
 

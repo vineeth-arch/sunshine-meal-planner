@@ -50,7 +50,7 @@ export function DashboardScreen() {
       <ScreenHeader
         eyebrow="Household dashboard"
         title="A calmer home for meal planning"
-        description="This summary now reflects the signed-in household's Firestore data."
+        description="This summary reflects the signed-in household's Supabase data."
       />
 
       {error ? (

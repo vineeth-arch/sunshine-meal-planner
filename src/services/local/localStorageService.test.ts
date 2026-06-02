@@ -28,17 +28,17 @@ describe('localStorageService', () => {
     localStorage.clear()
   })
 
-  it('seeds default storage when local storage is empty', () => {
+  it('renders defaults without writing local storage when local cache is empty', () => {
     const state = loadLocalKitchenState()
 
     expect(state.repo.length).toBeGreaterThan(0)
     expect(state.ingredients.length).toBeGreaterThan(0)
     expect(state.staples.length).toBeGreaterThan(0)
     expect(state.plan.weekStartingDate).toBe(getWeekStartDate())
-    expect(readRawStorageValue(STORAGE_KEY_REPO)).not.toBeNull()
-    expect(readRawStorageValue(STORAGE_KEY_PLAN)).not.toBeNull()
-    expect(readRawStorageValue(STORAGE_KEY_STAPLES)).not.toBeNull()
-    expect(readRawStorageValue(STORAGE_KEY_INGREDIENTS)).not.toBeNull()
+    expect(readRawStorageValue(STORAGE_KEY_REPO)).toBeNull()
+    expect(readRawStorageValue(STORAGE_KEY_PLAN)).toBeNull()
+    expect(readRawStorageValue(STORAGE_KEY_STAPLES)).toBeNull()
+    expect(readRawStorageValue(STORAGE_KEY_INGREDIENTS)).toBeNull()
   })
 
   it('detects corrupted storage and falls back safely', () => {
@@ -53,7 +53,7 @@ describe('localStorageService', () => {
     expect(state.plan.weekStartingDate).toBe(getWeekStartDate())
   })
 
-  it('rolls stale plans into last week storage and seeds a fresh week', () => {
+  it('renders stale plans as last week without writing rollover keys', () => {
     const stalePlan = {
       weekStartingDate: '2026-05-18',
       days: {
@@ -68,9 +68,7 @@ describe('localStorageService', () => {
     localStorage.setItem(STORAGE_KEY_PLAN, JSON.stringify(stalePlan))
 
     const state = loadLocalKitchenState()
-    const lastWeekRaw = JSON.parse(localStorage.getItem(STORAGE_KEY_LAST_WEEK) ?? 'null') as typeof stalePlan | null
-
-    expect(lastWeekRaw?.weekStartingDate).toBe('2026-05-18')
+    expect(localStorage.getItem(STORAGE_KEY_LAST_WEEK)).toBeNull()
     expect(state.lastWeekPlan?.weekStartingDate).toBe('2026-05-18')
     expect(state.plan.weekStartingDate).toBe('2026-05-25')
     expect(state.plan.days.monday.breakfast.sabjis).toEqual([])

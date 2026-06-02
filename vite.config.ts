@@ -51,7 +51,7 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/__/],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/(firestore\.googleapis\.com|www\.googleapis\.com|identitytoolkit\.googleapis\.com|securetoken\.googleapis\.com|firebaseinstallations\.googleapis\.com)\//,
+            urlPattern: ({ url }) => url.hostname.endsWith('.supabase.co'),
             handler: 'NetworkOnly',
           },
           {
@@ -95,7 +95,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/firebase')) return 'firebase'
+          if (id.includes('node_modules/@supabase')) return 'supabase'
           if (id.includes('node_modules/react-router')) return 'router'
           return undefined
         },
